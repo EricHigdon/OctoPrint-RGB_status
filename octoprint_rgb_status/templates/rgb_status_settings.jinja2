@@ -1,0 +1,137 @@
+<h3>RGB Status Settings</h3>
+<form class="form-horizontal">
+    <div class="control-group">
+        <label class="control-label" for="ledCount">{{ _('LED Count') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="ledCount" data-bind="value: settings.plugins.rgb_status.led_count">
+	    <span class="help-inline">Number of LED pixels</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="ledPin">{{ _('LED Pin') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="ledPin" data-bind="value: settings.plugins.rgb_status.led_pin">
+            <span class="help-inline">GPIO pin connected to the pixels (Anything but 10 requires running OctoPrint as root)</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="ledFreq">{{ _('LED Frequency') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="ledFreq" data-bind="value: settings.plugins.rgb_status.led_freq_hz">
+            <span class="help-inline">LED signal frequency in hertz (usually 800khz)</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="ledDMA">{{ _('LED DMA') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="ledDMA" data-bind="value: settings.plugins.rgb_status.led_dma">
+            <span class="help-inline">DMA channel to use for generating signal</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="ledBrightness">{{ _('LED Brightness') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="ledBrightness" data-bind="value: settings.plugins.rgb_status.led_brightness">
+            <span class="help-inline">Set to 0 for darkest and 255 for brightest</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="ledInvert">{{ _('LED Invert') }}</label>
+        <div class="controls">
+            <input type="checkbox" class="input-block-level" id="ledInvert" data-bind="checked: settings.plugins.rgb_status.led_invert">
+            <span class="help-inline">Check to invert the signal (when using NPN transistor level shift)</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="ledChannel">{{ _('LED channel') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="ledChannel" data-bind="value: settings.plugins.rgb_status.led_channel">
+	    <span class="help-inline">Set to '1' for GPIOs 13, 19, 41, 45 or 53</span>
+        </div>
+    </div>
+
+    <h4>Startup Effect Settings</h4>
+    <p>Configure the effect that is run when OctoPrint boots, or a LED strip setting is changed</p>
+    <div class="control-group">
+        <label class="control-label" for="startEffect">{{ _('Startup Effect') }}</label>
+        <div class="controls">
+            <select class="input-block-level" id="startEffect" data-bind="value: settings.plugins.rgb_status.init_effect">
+		{% for effect in plugin_rgb_status_effects %}
+	            <option value="{{ effect }}">{{ effect }}</option>
+		{% endfor %}
+	    </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="startEffectColor">{{ _('Startup Effect Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level" id="startEffectColor" data-bind="value: settings.plugins.rgb_status.init_effect_color">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="startEffectDelay">{{ _('Startup Effect Delay') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="startEffectDelay" data-bind="value: settings.plugins.rgb_status.init_effect_delay">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="startEffectIterations">{{ _('Startup Effect Iterations') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="startEffectIterations" data-bind="value: settings.plugins.rgb_status.init_effect_iterations">
+        </div>
+    </div>
+
+    <h4>Idle Effect Settings</h4>
+    <p>Configure the effect that is run when OctoPrint is sitting idle</p>
+    <div class="control-group">
+        <label class="control-label" for="idleEffect">{{ _('Idle Effect') }}</label>
+        <div class="controls">
+            <select" class="input-block-level" id="idleEffect" data-bind="value: settings.plugins.rgb_status.idle_effect">
+		{% for effect in plugin_rgb_status_effects %}
+	            <option value="{{ effect }}">{{ effect }}</option>
+		{% endfor %}
+	    </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="idleEffectColor">{{ _('Idle Effect Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level" id="idleEffectColor" data-bind="value: settings.plugins.rgb_status.idle_effect_color">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="idleEffectWait">{{ _('Idle Effect Delay') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="idleEffectDelay" data-bind="value: settings.plugins.rgb_status.idle_effect_delay">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="idleEffectIterations">{{ _('Startup Effect Iterations') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="idleEffectIterations" data-bind="value: settings.plugins.rgb_status.idle_effect_iterations">
+        </div>
+    </div>
+
+    <h4>Progress Bar Settings</h4>
+    <div class="control-group">
+        <label class="control-label" for="showProgress">{{ _('Show Print Progress') }}</label>
+        <div class="controls">
+            <input type="checkbox" class="input-block-level" id="showProgress" data-bind="checked: settings.plugins.rgb_status.show_progress">
+	    <span class="help-inline">Uncheck to stop showing print progress on the LEDs</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="progBaseColor">{{ _('Base Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level jscolor" id="progBaseColor" data-bind="value: settings.plugins.rgb_status.progress_base_color">
+	    <span class="help-inline">The color to use for the incomplete portion of the LEDs when rendering the progress bar</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="progColor">{{ _('Progress Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level jscolor" id="progColor" data-bind="value: settings.plugins.rgb_status.progress_color">
+	    <span class="help-inline">The color to use for the complete portion of the LEDs when rendering the progress bar</span>
+        </div>
+    </div>
+</form>
