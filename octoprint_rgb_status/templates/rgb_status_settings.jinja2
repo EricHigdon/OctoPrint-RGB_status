@@ -86,7 +86,7 @@
     <div class="control-group">
         <label class="control-label" for="idleEffect">{{ _('Idle Effect') }}</label>
         <div class="controls">
-            <select" class="input-block-level" id="idleEffect" data-bind="value: settings.plugins.rgb_status.idle_effect">
+            <select class="input-block-level" id="idleEffect" data-bind="value: settings.plugins.rgb_status.idle_effect">
 		{% for effect in plugin_rgb_status_effects %}
 	            <option value="{{ effect }}">{{ effect }}</option>
 		{% endfor %}

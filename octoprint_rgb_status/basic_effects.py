@@ -5,22 +5,23 @@ import time
 # Define functions which animate LEDs in various ways.
 def color_wipe(strip, color, delay=50, iterations=1):
     """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColorRGB(i, *color)
-        strip.show()
-        time.sleep(delay/1000.0)
+    for i in range(iterations):
+        for p in range(strip.numPixels()):
+            strip.setPixelColorRGB(p, *color)
+            strip.show()
+            time.sleep(delay/1000.0)
 
 
 def theater_chase(strip, color, delay=50, iterations=10):
     """Movie theater light style chaser animation."""
-    for j in range(iterations):
-        for q in range(3):
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColorRGB(i+q, *color)
+    for i in range(iterations):
+        for r in range(3):
+            for p in range(0, strip.numPixels(), 3):
+                strip.setPixelColorRGB(p+r, *color)
             strip.show()
             time.sleep(delay/1000.0)
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i+q, 0)
+            for p in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(p+r, 0)
 
 
 def wheel(pos):
@@ -37,29 +38,29 @@ def wheel(pos):
 
 def rainbow(strip, color=None, delay=20, iterations=1):
     """Draw rainbow that fades across all pixels at once."""
-    for j in range(256*iterations):
-        for i in range(strip.numPixels()):
-            strip.setPixelColor(i, wheel((i+j) & 255))
+    for i in range(256*iterations):
+        for p in range(strip.numPixels()):
+            strip.setPixelColor(p, wheel((p+i) & 255))
         strip.show()
         time.sleep(delay/1000.0)
 
 
 def rainbow_cycle(strip, color=None, delay=20, iterations=5):
     """Draw rainbow that uniformly distributes itself across all pixels."""
-    for j in range(256*iterations):
-        for i in range(strip.numPixels()):
-            strip.setPixelColor(i, wheel((int(i * 256 / strip.numPixels()) + j) & 255))
+    for i in range(256*iterations):
+        for p in range(strip.numPixels()):
+            strip.setPixelColor(p, wheel((int(p * 256 / strip.numPixels()) + i) & 255))
         strip.show()
         time.sleep(delay/1000.0)
 
 
 def theater_chase_rainbow(strip, color=None, delay=50, iterations=1):
     """Rainbow movie theater light style chaser animation."""
-    for j in range(256):
-        for q in range(3):
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i+q, wheel((i+j) % 255))
+    for i in range(256*iterations):
+        for r in range(3):
+            for p in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(p+r, wheel((p+i) % 255))
             strip.show()
             time.sleep(delay/1000.0)
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i+q, 0)
+            for p in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(p+r, 0)

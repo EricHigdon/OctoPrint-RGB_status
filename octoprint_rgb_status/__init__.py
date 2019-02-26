@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from octoprint import plugin
+import multiprocessing
 from .utils import *
 from .basic_effects import *
 
@@ -118,7 +119,10 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
     def run_effect(self, effect, color=None, delay=50, iterations=1):
         effect = self._effects.get(effect)
         if effect is not None:
-            effect(self.strip, color=color, delay=delay, iterations=iterations)
+            if hasattr(self, '_effect'):
+                self._effect.terminate()
+            self._effect = multiprocessing.Process(target=effect, args=(self.strip, color, delay, iterations))
+            self._effect.start()
         else:
             self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
 
