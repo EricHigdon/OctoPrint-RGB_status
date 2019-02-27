@@ -8,6 +8,10 @@ Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wik
 or manually using this URL:
 
     https://github.com/EricHigdon/OctoPrint-Rgb_status/archive/master.zip
+    
+## Running Without Root
+
+Since OctoPrint should usually not be run as root, the default LED pin is 10 (SPI). For details about what may be required to use SPI on your instance, see https://github.com/jgarff/rpi_ws281x#spi
 
 ## Reporting Issues & Improvments
 
