@@ -2,12 +2,33 @@
 from __future__ import absolute_import, unicode_literals
 from octoprint import plugin
 import multiprocessing
+from rpi_ws281x import *
 from .utils import *
 from .basic_effects import *
 
 
-STRIP_SETTINGS = ['led_count', 'led_pin', 'led_freq_hz', 'led_dma', 'led_invert', 'led_brightness', 'led_channel']
+STRIP_SETTINGS = ['led_count', 'led_pin', 'led_freq_hz', 'led_dma', 'led_invert', 'led_brightness', 'led_channel', 'strip_type']
+STRIP_TYPES = {
+    'SK6812_STRIP_RGBW': SK6812_STRIP_RGBW,
+    'SK6812_STRIP_RBGW': SK6812_STRIP_RBGW,
+    'SK6812_STRIP_GRBW': SK6812_STRIP_GRBW,
+    'SK6812_STRIP_GBRW': SK6812_STRIP_GBRW,
+    'SK6812_STRIP_BRGW': SK6812_STRIP_BRGW,
+    'SK6812_STRIP_BGRW': SK6812_STRIP_BGRW,
+    'SK6812_SHIFT_WMASK':SK6812_SHIFT_WMASK,
+    'WS2811_STRIP_RGB': WS2811_STRIP_RGB,
+    'WS2811_STRIP_RBG': WS2811_STRIP_RBG,
+    'WS2811_STRIP_GRB': WS2811_STRIP_GRB,
+    'WS2811_STRIP_GBR': WS2811_STRIP_GBR,
+    'WS2811_STRIP_BRG': WS2811_STRIP_BRG,
+    'WS2811_STRIP_BGR': WS2811_STRIP_BGR,
+    'WS2812_STRIP': WS2812_STRIP,
+    'SK6812_STRIP': SK6812_STRIP,
+    'SK6812W_STRIP': SK6812W_STRIP,
+}
+IDLE_SETTINGS = ['idle_effect', 'idle_effect_color', 'idle_effect_delay', 'idle_effect_iterations']
 EFFECTS = {
+    'Solid Color': solid_color,
     'Color Wipe': color_wipe,
     'Theater Chase': theater_chase,
     'Rainbow': rainbow,
@@ -17,17 +38,17 @@ EFFECTS = {
 
 
 class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventHandlerPlugin, plugin.SettingsPlugin, plugin.TemplatePlugin):
-    _effects = EFFECTS
 
     def get_settings_defaults(self):
         return {
-            'led_count': 10,  # Number of LED pixels.
-            'led_pin': 10,  # GPIO pin connected to the pixels (must be 10 unless you run octoprint as root).
-            'led_freq_hz': 800000,  # LED signal frequency in hertz (usually 800khz)
-            'led_dma': 10,  # DMA channel to use for generating signal (try 10)
-            'led_brightness': 255,  # Set to 0 for darkest and 255 for brightest
-            'led_invert': False,  # True to invert the signal (when using NPN transistor level shift)
-            'led_channel': 0,  # set to '1' for GPIOs 13, 19, 41, 45 or 53# LED strip configuration:
+            'led_count': 10,
+            'led_pin': 10, 
+            'led_freq_hz': 800000,
+            'led_dma': 10,
+            'led_brightness': 255,
+            'led_invert': False,
+            'led_channel': 0,
+            'strip_type': 'WS2811_STRIP_GRB',
 
             'show_progress': True,
             'progress_base_color': '#ffffff',
@@ -36,22 +57,29 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
             'init_effect': 'Rainbow Cycle',
             'init_effect_color': None,
             'init_effect_delay': 20,
-            'init_effect_iterations': 1,
 
-            'idle_effect': 'Color Wipe',
-            'idle_effect_color': '#ffffff',
+            'idle_effect': 'Solid Color',
+            'idle_effect_color': '#00ff00',
             'idle_effect_delay': 10,
-            'idle_effect_iterations': 1,
         }
 
     def on_settings_save(self, data):
         old_strip_settings = {}
         for setting in STRIP_SETTINGS:
             old_strip_settings[setting] = self._settings.get([setting])
+
+        old_idle_settings = {}
+        for setting in IDLE_SETTINGS:
+            old_idle_settings[setting] = self._settings.get([setting])
+
         changed_settings = plugin.SettingsPlugin.on_settings_save(self, data)
         for setting in STRIP_SETTINGS:
             if old_strip_settings[setting] != self._settings.get([setting]):
                 self.init_strip()
+                break
+        for setting in IDLE_SETTINGS:
+            if old_idle_settings[setting] != self._settings.get([setting]):
+                self.run_idle_effect()
                 break
         return changed_settings
 
@@ -61,13 +89,15 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
         ]
 
     def get_template_vars(self):
-        return {'effects': self._effects}
+        return {'effects': EFFECTS, 'strip_types': STRIP_TYPES}
 
     def init_strip(self):
         settings = []
         for setting in STRIP_SETTINGS:
             if setting == 'led_invert':
                 settings.append(self._settings.get_boolean([setting]))
+            elif setting == 'strip_type':
+                settings.append(STRIP_TYPES.get(self._settings.get([setting])))
             else:
                 settings.append(self._settings.get_int([setting]))
         self.strip = Adafruit_NeoPixel(*settings)
@@ -76,29 +106,25 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
             self._settings.get(['init_effect']),
             hex_to_rgb(self._settings.get(['init_effect_color'])),
             self._settings.get_int(['init_effect_delay']),
-            self._settings.get_int(['init_effect_iterations']),
         )
-        self.run_effect(
-            self._settings.get(['idle_effect']),
-            hex_to_rgb(self._settings.get(['idle_effect_color'])),
-            self._settings.get_int(['idle_effect_delay']),
-            self._settings.get_int(['idle_effect_iterations']),
-        )
+        self.run_idle_effect()
 
     def on_after_startup(self):
         self.init_strip()
 
+    def run_idle_effect(self):
+        self.run_effect(
+            self._settings.get(['idle_effect']),
+            hex_to_rgb(self._settings.get(['idle_effect_color'])),
+            self._settings.get_int(['idle_effect_delay']),
+        )
+
     def on_event(self, event, payload):
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
-            self.run_effect('Color Wipe', progress_base_color, wait_ms=10)
+            self.run_effect('Solid Color', progress_base_color, delay=10)
         elif event in ['PrintDone', 'PrintCancelled']:
-            self.run_effect(
-                self._settings.get(['idle_effect']),
-                hex_to_rgb(self._settings.get(['idle_effect_color'])),
-                self._settings.get_int(['idle_effect_delay']),
-                self._settings.get_int(['idle_effect_iterations']),
-            )
+            self.run_idle_effect()
 
 
     def on_print_progress(self, storage, path, progress):
@@ -116,12 +142,17 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
                     self.strip.setPixelColorRGB(i, *base_color)
             self.strip.show()
 
-    def run_effect(self, effect, color=None, delay=50, iterations=1):
-        effect = self._effects.get(effect)
+    def run_effect(self, effect_name, color=None, delay=50, iterations=1):
+        effect = EFFECTS.get(effect_name)
         if effect is not None:
-            if hasattr(self, '_effect'):
-                self._effect.terminate()
-            self._effect = multiprocessing.Process(target=effect, args=(self.strip, color, delay, iterations))
+            if not hasattr(self, '_queue'):
+                self._queue = multiprocessing.Queue()
+            if hasattr(self, '_effect') and self._effect.is_alive():
+                self._queue.put('KILL')
+                self._logger.info('Killing effect: ' + self._effect.name)
+            if not hasattr(self, '_lock'):
+                self._lock = multiprocessing.Lock()
+            self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay), name=effect_name)
             self._effect.start()
         else:
             self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))

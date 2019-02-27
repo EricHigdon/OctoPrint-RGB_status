@@ -2,7 +2,27 @@ from rpi_ws281x import *
 import time
 
 
+def run_effect(effect, lock, queue, strip, color, delay):
+    while True:
+        lock.acquire()
+        try:
+            if not queue.empty():
+                msg = queue.get()
+                if msg == 'KILL':
+                    raise Exception
+            effect(strip, color, delay)
+        except:
+            break
+        finally:
+            lock.release()
+
 # Define functions which animate LEDs in various ways.
+def solid_color(strip, color, delay=0, iterations=1):
+    for p in range(strip.numPixels()):
+        strip.setPixelColorRGB(p, *color)
+    strip.show()
+
+
 def color_wipe(strip, color, delay=50, iterations=1):
     """Wipe color across display a pixel at a time."""
     for i in range(iterations):
@@ -10,6 +30,10 @@ def color_wipe(strip, color, delay=50, iterations=1):
             strip.setPixelColorRGB(p, *color)
             strip.show()
             time.sleep(delay/1000.0)
+        for p in range(strip.numPixels()):
+            strip.setPixelColorRGB(p, 0, 0, 0)
+        strip.show()
+        time.sleep(delay/1000.0)
 
 
 def theater_chase(strip, color, delay=50, iterations=10):

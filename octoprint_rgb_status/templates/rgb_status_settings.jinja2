@@ -1,6 +1,16 @@
 <h3>RGB Status Settings</h3>
 <form class="form-horizontal">
     <div class="control-group">
+        <label class="control-label" for="stripType">{{ _('LED Type') }}</label>
+        <div class="controls">
+            <select class="input-block-level" id="stripType" data-bind="value: settings.plugins.rgb_status.strip_type">
+		{% for type in plugin_rgb_status_strip_types %}
+	            <option value="{{ type }}">{{ type }}</option>
+		{% endfor %}
+	    </select>
+        </div>
+    </div>
+    <div class="control-group">
         <label class="control-label" for="ledCount">{{ _('LED Count') }}</label>
         <div class="controls">
             <input type="number" class="input-block-level" id="ledCount" data-bind="value: settings.plugins.rgb_status.led_count">
@@ -74,12 +84,6 @@
             <input type="number" class="input-block-level" id="startEffectDelay" data-bind="value: settings.plugins.rgb_status.init_effect_delay">
         </div>
     </div>
-    <div class="control-group">
-        <label class="control-label" for="startEffectIterations">{{ _('Startup Effect Iterations') }}</label>
-        <div class="controls">
-            <input type="number" class="input-block-level" id="startEffectIterations" data-bind="value: settings.plugins.rgb_status.init_effect_iterations">
-        </div>
-    </div>
 
     <h4>Idle Effect Settings</h4>
     <p>Configure the effect that is run when OctoPrint is sitting idle</p>
@@ -103,12 +107,6 @@
         <label class="control-label" for="idleEffectWait">{{ _('Idle Effect Delay') }}</label>
         <div class="controls">
             <input type="number" class="input-block-level" id="idleEffectDelay" data-bind="value: settings.plugins.rgb_status.idle_effect_delay">
-        </div>
-    </div>
-    <div class="control-group">
-        <label class="control-label" for="idleEffectIterations">{{ _('Startup Effect Iterations') }}</label>
-        <div class="controls">
-            <input type="number" class="input-block-level" id="idleEffectIterations" data-bind="value: settings.plugins.rgb_status.idle_effect_iterations">
         </div>
     </div>
 
