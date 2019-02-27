@@ -157,7 +157,21 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
         else:
             self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
 
+    def get_update_information(self, *args, **kwargs):
+        return {
+            'rgb_status':{
+                'displayName': self._plugin_name,
+                'displayVersion': self._plugin_version,
+                'type': 'github_release',
+                'current': self._plugin_version,
+                'user': 'EricHigdon',
+                'repo': 'OctoPrint-RGB_status',
+                'pip': 'https://github.com/EricHigdon/OctoPrint-RGB_status/archive/{target}.zip',
+            }
+        }
+
 
 __plugin_name__ = 'RGB Status'
 __plugin_pythoncompat__ = ">=2.7,<4"
 __plugin_implementation__ = RGBStatusPlugin()
+__plugin_hooks__ = {"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information}
