@@ -37,7 +37,13 @@ EFFECTS = {
 }
 
 
-class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventHandlerPlugin, plugin.SettingsPlugin, plugin.TemplatePlugin):
+class RGBStatusPlugin(
+	plugin.RestartNeedingPlugin,
+	plugin.StartupPlugin,
+	plugin.ProgressPlugin,
+	plugin.EventHandlerPlugin,
+	plugin.SettingsPlugin,
+	plugin.TemplatePlugin):
 
     def get_settings_defaults(self):
         return {
