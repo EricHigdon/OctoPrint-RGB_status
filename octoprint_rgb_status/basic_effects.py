@@ -11,7 +11,7 @@ def run_effect(effect, lock, queue, strip, color, delay):
                 if msg == 'KILL':
                     raise Exception
             effect(strip, color, delay)
-        except:
+        except Exception:
             break
         finally:
             lock.release()
