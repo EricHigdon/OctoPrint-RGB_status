@@ -46,7 +46,7 @@ plugin_requires = ['rpi_ws281x==4.1.0']
 plugin_additional_data = []
 
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
-plugin_additional_packages = ['rpi-ws281x==4.1.0']
+plugin_additional_packages = []
 
 # Any python packages within <plugin_package>.* you do NOT want to install with your plugin
 plugin_ignored_packages = []
