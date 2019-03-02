@@ -37,7 +37,14 @@ EFFECTS = {
 }
 
 
-class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventHandlerPlugin, plugin.SettingsPlugin, plugin.TemplatePlugin):
+class RGBStatusPlugin(
+	plugin.RestartNeedingPlugin,
+	plugin.StartupPlugin,
+	plugin.ProgressPlugin,
+	plugin.EventHandlerPlugin,
+	plugin.SettingsPlugin,
+	plugin.TemplatePlugin,
+        plugin.ShutdownPlugin):
 
     def get_settings_defaults(self):
         return {
@@ -161,6 +168,9 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
             self._effect.start()
         else:
             self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
+
+    def on_shutdown(self):
+        self.kill_effect()
 
     def get_update_information(self, *args, **kwargs):
         return {
