@@ -3,16 +3,10 @@ import time
 
 
 def run_effect(effect, lock, queue, strip, color, delay):
-    while True:
+    while queue.empty():
         lock.acquire()
         try:
-            if not queue.empty():
-                msg = queue.get()
-                if msg == 'KILL':
-                    raise Exception
             effect(strip, color, delay)
-        except:
-            break
         finally:
             lock.release()
 

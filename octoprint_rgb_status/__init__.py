@@ -123,6 +123,7 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             self.run_effect('Solid Color', progress_base_color, delay=10)
+            self.kill_effect()
         elif event in ['PrintDone', 'PrintCancelled']:
             self.run_idle_effect()
 
@@ -142,14 +143,18 @@ class RGBStatusPlugin(plugin.StartupPlugin, plugin.ProgressPlugin, plugin.EventH
                     self.strip.setPixelColorRGB(i, *base_color)
             self.strip.show()
 
+    def kill_effect(self):
+        if hasattr(self, '_effect') and self._effect.is_alive():
+            self._queue.put('KILL')
+            self._effect.join()
+            self._logger.info('Killing effect: ' + self._effect.name)
+
     def run_effect(self, effect_name, color=None, delay=50, iterations=1):
         effect = EFFECTS.get(effect_name)
         if effect is not None:
             if not hasattr(self, '_queue'):
                 self._queue = multiprocessing.Queue()
-            if hasattr(self, '_effect') and self._effect.is_alive():
-                self._queue.put('KILL')
-                self._logger.info('Killing effect: ' + self._effect.name)
+            self.kill_effect()
             if not hasattr(self, '_lock'):
                 self._lock = multiprocessing.Lock()
             self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay), name=effect_name)
