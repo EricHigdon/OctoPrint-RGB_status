@@ -3,12 +3,14 @@ import time
 
 
 def run_effect(effect, lock, queue, strip, color, delay):
-    while queue.empty():
-        lock.acquire()
-        try:
+    lock.acquire()
+    try:
+        while queue.empty():
             effect(strip, color, delay)
-        finally:
-            lock.release()
+        while not queue.empty():
+            queue.get()
+    finally:
+        lock.release()
 
 # Define functions which animate LEDs in various ways.
 def solid_color(strip, color, delay=0, iterations=1):

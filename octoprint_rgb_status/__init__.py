@@ -120,6 +120,7 @@ class RGBStatusPlugin(
         self.init_strip()
 
     def run_idle_effect(self):
+        self._logger.info('Starting Idle Effect')
         self.run_effect(
             self._settings.get(['idle_effect']),
             hex_to_rgb(self._settings.get(['idle_effect_color'])),
@@ -130,13 +131,13 @@ class RGBStatusPlugin(
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             self.run_effect('Solid Color', progress_base_color, delay=10)
-            self.kill_effect()
         elif event in ['PrintDone', 'PrintCancelled']:
             self.run_idle_effect()
 
 
     def on_print_progress(self, storage, path, progress):
         if self._settings.get_boolean(['show_progress']):
+            self.kill_effect()
             self._logger.info('Updating Progress LEDs: ' + str(progress))
             perc = float(progress) / float(self.strip.numPixels())
             base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
@@ -154,18 +155,21 @@ class RGBStatusPlugin(
         if hasattr(self, '_effect') and self._effect.is_alive():
             self._queue.put('KILL')
             self._effect.join()
-            self._logger.info('Killing effect: ' + self._effect.name)
+            self._effect.terminate()
+            self._logger.info('Killed effect: ' + self._effect.name)
 
     def run_effect(self, effect_name, color=None, delay=50, iterations=1):
         effect = EFFECTS.get(effect_name)
         if effect is not None:
             if not hasattr(self, '_queue'):
                 self._queue = multiprocessing.Queue()
-            self.kill_effect()
             if not hasattr(self, '_lock'):
                 self._lock = multiprocessing.Lock()
+            self.kill_effect()
+            self._logger.info('Starting new effect {}'.format(effect_name))
             self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay), name=effect_name)
             self._effect.start()
+            self._logger.info('Started new effect {}'.format(self._effect))
         else:
             self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
 
