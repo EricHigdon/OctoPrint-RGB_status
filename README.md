@@ -14,7 +14,7 @@ or manually using this URL:
 Since OctoPrint should usually not be run as root, the default LED pin is 10 (SPI). For details about what may be required to use SPI on your instance, see https://github.com/jgarff/rpi_ws281x#spi
 
 SPI requires you to be in the gpio group if you wish to control your LEDs without root.
-You can add the pi user to the group with `sudo sdduser pi gpio`
+You can add the pi user to the group with `sudo adduser pi gpio`
 
 You'll also need to enable SPI by running sudo raspi-config interfacing options > SPI > Enable
 
