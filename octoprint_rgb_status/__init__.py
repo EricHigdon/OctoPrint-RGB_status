@@ -107,8 +107,12 @@ class RGBStatusPlugin(
                 settings.append(STRIP_TYPES.get(self._settings.get([setting])))
             else:
                 settings.append(self._settings.get_int([setting]))
-        self.strip = Adafruit_NeoPixel(*settings)
-        self.strip.begin()
+        try:
+            self.strip = Adafruit_NeoPixel(*settings)
+            self.strip.begin()
+        except Exception as e:
+            self._logger.error(e)
+            self.strip = None
         self.run_effect(
             self._settings.get(['init_effect']),
             hex_to_rgb(self._settings.get(['init_effect_color'])),
@@ -136,7 +140,7 @@ class RGBStatusPlugin(
 
 
     def on_print_progress(self, storage, path, progress):
-        if self._settings.get_boolean(['show_progress']):
+        if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self.kill_effect()
             self._logger.info('Updating Progress LEDs: ' + str(progress))
             perc = float(progress) / float(self.strip.numPixels())
@@ -150,6 +154,8 @@ class RGBStatusPlugin(
                 else:
                     self.strip.setPixelColorRGB(i, *base_color)
             self.strip.show()
+        elif self.strip is None:
+            self._logger.error('Error setting progress: The strip object does not exist. Did it fail to initialize?')
 
     def kill_effect(self):
         if hasattr(self, '_effect') and self._effect.is_alive():
@@ -159,19 +165,22 @@ class RGBStatusPlugin(
             self._logger.info('Killed effect: ' + self._effect.name)
 
     def run_effect(self, effect_name, color=None, delay=50, iterations=1):
-        effect = EFFECTS.get(effect_name)
-        if effect is not None:
-            if not hasattr(self, '_queue'):
-                self._queue = multiprocessing.Queue()
-            if not hasattr(self, '_lock'):
-                self._lock = multiprocessing.Lock()
-            self.kill_effect()
-            self._logger.info('Starting new effect {}'.format(effect_name))
-            self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay), name=effect_name)
-            self._effect.start()
-            self._logger.info('Started new effect {}'.format(self._effect))
+        if self.strip is not None:
+            effect = EFFECTS.get(effect_name)
+            if effect is not None:
+                if not hasattr(self, '_queue'):
+                    self._queue = multiprocessing.Queue()
+                if not hasattr(self, '_lock'):
+                    self._lock = multiprocessing.Lock()
+                self.kill_effect()
+                self._logger.info('Starting new effect {}'.format(effect_name))
+                self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay), name=effect_name)
+                self._effect.start()
+                self._logger.info('Started new effect {}'.format(self._effect))
+            else:
+                self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
         else:
-            self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
+            self._logger.error('Error running effect: The strip object does not exist. Did it fail to initialize?')
 
     def on_shutdown(self):
         self.kill_effect()
