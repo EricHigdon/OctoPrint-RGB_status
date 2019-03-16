@@ -143,7 +143,7 @@ class RGBStatusPlugin(
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self.kill_effect()
             self._logger.info('Updating Progress LEDs: ' + str(progress))
-            perc = float(progress) / float(self.strip.numPixels())
+            perc = float(progress) / 100 * float(self.strip.numPixels())
             base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             progress_color = hex_to_rgb(self._settings.get(['progress_color']))
             for i in range(self.strip.numPixels()):
