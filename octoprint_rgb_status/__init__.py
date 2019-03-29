@@ -140,6 +140,8 @@ class RGBStatusPlugin(
 
 
     def on_print_progress(self, storage, path, progress):
+	if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
+	    self._logger.info('Progress was set to 100, but the idle effect was already running. Ignoring progress update')
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self.kill_effect()
             self._logger.info('Updating Progress LEDs: ' + str(progress))
