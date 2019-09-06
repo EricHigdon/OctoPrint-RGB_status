@@ -33,7 +33,8 @@ EFFECTS = {
     'Theater Chase': theater_chase,
     'Rainbow': rainbow,
     'Rainbow Cycle': rainbow_cycle,
-    'Theater Chase Rainbow': theater_chase_rainbow
+    'Theater Chase Rainbow': theater_chase_rainbow,
+    'Pulse': pulse
 }
 
 
@@ -239,7 +240,6 @@ class RGBStatusPlugin(
         elif event in ['PrintDone', 'PrintCancelled']:
             self.run_idle_effect()
 
-
     def on_print_progress(self, storage, path, progress):
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self.kill_effect()
@@ -303,4 +303,6 @@ class RGBStatusPlugin(
 __plugin_name__ = 'RGB Status'
 __plugin_pythoncompat__ = ">=2.7,<4"
 __plugin_implementation__ = RGBStatusPlugin()
-__plugin_hooks__ = {"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information}
+__plugin_hooks__ = {
+    'octoprint.plugin.softwareupdate.check_config': __plugin_implementation__.get_update_information,
+}

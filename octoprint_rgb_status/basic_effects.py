@@ -1,4 +1,5 @@
 from rpi_ws281x import *
+from .utils import blend_colors
 import time
 
 
@@ -84,3 +85,16 @@ def theater_chase_rainbow(strip, color=None, delay=50, iterations=1):
             time.sleep(delay/1000.0)
             for p in range(0, strip.numPixels(), 3):
                 strip.setPixelColor(p+r, 0)
+
+
+def pulse(strip, color, delay, iterations=1):
+    for p in range(strip.numPixels()):
+        strip.setPixelColorRGB(p, *color)
+    for i in range(255):
+        strip.setBrightness(i)
+        strip.show()
+        time.sleep(delay/1000.0)
+    for i in reversed(range(255)):
+        strip.setBrightness(i)
+        strip.show()
+        time.sleep(delay/1000.0)
