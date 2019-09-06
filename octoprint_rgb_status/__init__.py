@@ -38,13 +38,107 @@ EFFECTS = {
 
 
 class RGBStatusPlugin(
-	plugin.RestartNeedingPlugin,
+        plugin.AssetPlugin,
 	plugin.StartupPlugin,
 	plugin.ProgressPlugin,
 	plugin.EventHandlerPlugin,
 	plugin.SettingsPlugin,
 	plugin.TemplatePlugin,
-        plugin.ShutdownPlugin):
+        plugin.ShutdownPlugin,
+        plugin.SimpleApiPlugin,
+        plugin.WizardPlugin):
+
+    api_errors = []
+
+    def is_wizard_required(self):
+        return any([not value for key, value in self.get_wizard_details().items()])
+
+    def get_wizard_version(self):
+        return 3
+
+    def get_wizard_details(self):
+        return {
+            'adduser_done': self.adduser_done(),
+            'spi_enabled': self.spi_enabled(),
+            'buffer_increased': self.buffer_increased(),
+            'frequency_set': self.frequency_set(),
+        }
+
+    def get_api_commands(self):
+        return {
+            'adduser': ['password'],
+            'enable_spi': ['password'],
+            'increase_buffer': ['password'],
+            'set_frequency': ['password'],
+        }
+
+    def run_command(self, command, password=None):
+        from subprocess import Popen, PIPE
+        if not isinstance(command, list):
+            command = command.split()
+        proc = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        if password is not None:
+            stdout, stderr = proc.communicate('{}\n'.format(password).encode())
+        else:
+            stdout, stderr = proc.communicate()
+        if stderr and 'incorrect password attempt' in stderr:
+            self.api_errors.append('Incorrect password attempt')
+            self._logger.error(stderr)
+        else:
+            return stdout
+
+    def adduser_done(self):
+        user_groups = self.run_command('groups pi').split()
+        return 'gpio' in user_groups
+
+    def spi_enabled(self):
+        with open('/boot/config.txt') as file:
+            for line in file:
+                if line.startswith('dtparam=spi=on'):
+                    return True
+        return False
+
+    def buffer_increased(self):
+        with open('/boot/cmdline.txt') as file:
+            for line in file:
+                if 'spidev.bufsiz=' in line:
+                    return True
+        return False
+
+    def frequency_set(self):
+        with open('/boot/config.txt') as file:
+            for line in file:
+                if line.startswith('core_freq=250'):
+                    return True
+        return False
+
+    def build_response(self):
+        import flask
+        details = self.get_wizard_details()
+        details.update({'errors': self.api_errors})
+        self.api_errors = []
+        return flask.jsonify(details)
+
+    def on_api_command(self, command, data):
+        output = ''
+        self._logger.info('{} command called'.format(command))
+        password = data.get('password', None)
+        cmd = ''
+        if command == 'adduser':
+            cmd = 'sudo -S adduser pi gpio' 
+        elif command == 'enable_spi' and not self.spi_enabled():
+            cmd = ['sudo', '-S', 'bash', '-c', 'echo dtparam=spi=on >> /boot/config.txt']
+        elif command == 'increase_buffer' and not self.buffer_increased():
+            cmd = ['sudo', '-S', 'sed', '-i', '$ s/$/ spidev.bufsiz=32768/', '/boot/cmdline.txt']
+        elif command == 'set_frequency' and not self.frequency_set():
+            cmd = ['sudo', '-S', 'bash', '-c', 'echo core_freq=250 >> /boot/config.txt']
+        if cmd:
+            stdout = self.run_command(cmd, password=password)
+
+        return self.build_response()
+
+    def on_api_get(self, request):
+        return self.build_response()
 
     def get_settings_defaults(self):
         return {
@@ -92,11 +186,18 @@ class RGBStatusPlugin(
 
     def get_template_configs(self):
         return [
-            {'type': 'settings', 'custom_bindings':False}
+            {'type': 'settings', 'custom_bindings':False},
+            {'type': 'wizard', 'mandatory': True}
         ]
 
     def get_template_vars(self):
         return {'effects': EFFECTS, 'strip_types': STRIP_TYPES}
+
+    def get_assets(self):
+        return {
+            'js': ['js/rgb_status.js'],
+            'css': ['css/rgb_status.css']
+        }
 
     def init_strip(self):
         settings = []

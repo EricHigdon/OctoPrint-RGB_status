@@ -1,0 +1,47 @@
+<h2>Raspberry Pi SPI Setup</h2>
+<p>Since OctoPrint is not usually run as root, the default LED control method is SPI, which works on pin 10.</p>
+<p>There are a few steps that must be taken to enable SPI for use by OctoPrint. The following steps will walk you through the process.</p>
+
+<ol>
+	<li id="enableSPIStep">
+		<h3>Enable SPI</h3>
+		<p>To enable SPI, you'll need to add <span class="code">dtparam=spi=on</span> to your /boot/config.txt file.</p>
+		<p>The following command will enable SPI for you by running<br>
+			<span class="code">sudo bash -c 'echo dtparam=spi=on >> /boot/config.txt'</span>
+		</p>
+		<label for="spi_password">Password:</label>
+		<input type="password" name="password" id="spi_password" value="raspberry" />
+		<p class="helpText">Since this command requires root access, your raspberry pi's password is required. The default is "raspberry" and is prefilled in the field above</p>
+		<button class="btn btn-primary">Enable SPI</button>
+	</li>
+	<li id="addUserStep">
+		<h3>Add the pi user to the gpio group</h3>
+		<p>The following command will add the pi user to the gpio group for you by running<br>
+			<span class="code">sudo adduser pi gpio</span>
+		</p>
+		<label for="adduser_password">Password:</label>
+		<input type="password" name="password" id="adduser_password" value="raspberry"/>
+		<p class="helpText">Since this command requires root access, your raspberry pi's password is required. The default is "raspberry" and is prefilled in the field above</p>
+		<button class="btn btn-primary">Add gpio Group</button>
+	</li>
+	<li id="increaseBufferStep">
+		<h3>Increase the SPI buffer size</h3>
+		<p>The following command will increase the maximum SPI transfer to 32768 bytes for you by running<br>
+			<span class="code">sudo sed -i '$ s/$/ spidev.bufsiz=32768' /boot/cmdline.txt</span>
+		</p>
+		<label for="increaseBuffer_password">Password:</label>
+		<input type="password" name="password" id="increaseBuffer_password" value="raspberry"/>
+		<p class="helpText">Since this command requires root access, your raspberry pi's password is required. The default is "raspberry" and is prefilled in the field above</p>
+		<button class="btn btn-primary">Set Buffer Size</button>
+	</li>
+	<li id="setFrequencyStep">
+		<h3>Set the GPU core frequency</h3>
+		<p>The following command will set the GPU core frequency to 250MHz for you by running<br>
+			<span class="code">sudo bash -c 'echo core_freq=250 >> /boot/config.txt'</span>
+		</p>
+		<label for="setFrequency_password">Password:</label>
+		<input type="password" name="password" id="setFrequency_password" value="raspberry"/>
+		<p class="helpText">Since this command requires root access, your raspberry pi's password is required. The default is "raspberry" and is prefilled in the field above</p>
+		<button class="btn btn-primary">Set GPU Frequency</button>
+	</li>
+</ol>
