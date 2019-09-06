@@ -98,3 +98,23 @@ def pulse(strip, color, delay, iterations=1):
         strip.setBrightness(i)
         strip.show()
         time.sleep(delay/1000.0)
+
+
+def knight_rider(strip, color, delay, iterations=1):
+    for active_pixel in range(strip.numPixels()):
+        for i in range(strip.numPixels()):
+            if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
+                strip.setPixelColorRGB(i, *color)
+            else:
+                strip.setPixelColorRGB(i, *(0,0,0))
+        strip.show()
+        time.sleep(delay/100.0)
+    for active_pixel in reversed(range(strip.numPixels())):
+        for i in range(strip.numPixels()):
+            if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
+                strip.setPixelColorRGB(i, *color)
+            else:
+                strip.setPixelColorRGB(i, *(0,0,0))
+        strip.show()
+        time.sleep(delay/100.0)
+        

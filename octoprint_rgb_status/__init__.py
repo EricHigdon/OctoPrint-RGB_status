@@ -34,7 +34,8 @@ EFFECTS = {
     'Rainbow': rainbow,
     'Rainbow Cycle': rainbow_cycle,
     'Theater Chase Rainbow': theater_chase_rainbow,
-    'Pulse': pulse
+    'Pulse': pulse,
+    'Knight Rider': knight_rider,
 }
 
 
