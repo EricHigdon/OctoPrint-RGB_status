@@ -26,11 +26,11 @@ def color_wipe(strip, color, delay=50, iterations=1):
         for p in range(strip.numPixels()):
             strip.setPixelColorRGB(p, *color)
             strip.show()
-            time.sleep(delay/1000.0)
+            time.sleep(delay/100.0)
         for p in range(strip.numPixels()):
             strip.setPixelColorRGB(p, 0, 0, 0)
         strip.show()
-        time.sleep(delay/1000.0)
+        time.sleep(delay/100.0)
 
 
 def theater_chase(strip, color, delay=50, iterations=10):
