@@ -60,6 +60,29 @@
         </div>
     </div>
 
+    <h4>Progress Bar Settings</h4>
+    <div class="control-group">
+        <label class="control-label" for="showProgress">{{ _('Show Print Progress') }}</label>
+        <div class="controls">
+            <input type="checkbox" class="input-block-level" id="showProgress" data-bind="checked: settings.plugins.rgb_status.show_progress">
+	    <span class="help-inline">Uncheck to stop showing print progress on the LEDs</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="progBaseColor">{{ _('Base Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level jscolor" id="progBaseColor" data-bind="value: settings.plugins.rgb_status.progress_base_color">
+	    <span class="help-inline">The color to use for the incomplete portion of the LEDs when rendering the progress bar</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="progColor">{{ _('Progress Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level jscolor" id="progColor" data-bind="value: settings.plugins.rgb_status.progress_color">
+	    <span class="help-inline">The color to use for the complete portion of the LEDs when rendering the progress bar</span>
+        </div>
+    </div>
+
     <h4>Startup Effect Settings</h4>
     <p>Configure the effect that is run when OctoPrint boots, or a LED strip setting is changed</p>
     <div class="control-group">
@@ -110,26 +133,78 @@
         </div>
     </div>
 
-    <h4>Progress Bar Settings</h4>
+    <h4>Print Paused Effect Settings</h4>
+    <p>Configure the effect that is run when a print is paused.</p>
     <div class="control-group">
-        <label class="control-label" for="showProgress">{{ _('Show Print Progress') }}</label>
+        <label class="control-label" for="pauseEffect">{{ _('Pause Effect') }}</label>
         <div class="controls">
-            <input type="checkbox" class="input-block-level" id="showProgress" data-bind="checked: settings.plugins.rgb_status.show_progress">
-	    <span class="help-inline">Uncheck to stop showing print progress on the LEDs</span>
+            <select class="input-block-level" id="pauseEffect" data-bind="value: settings.plugins.rgb_status.pause_effect">
+		{% for effect in plugin_rgb_status_effects %}
+	            <option value="{{ effect }}">{{ effect }}</option>
+		{% endfor %}
+	    </select>
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label" for="progBaseColor">{{ _('Base Color') }}</label>
+        <label class="control-label" for="pauseEffectColor">{{ _('Pause Effect Color') }}</label>
         <div class="controls">
-            <input type="color" class="input-block-level jscolor" id="progBaseColor" data-bind="value: settings.plugins.rgb_status.progress_base_color">
-	    <span class="help-inline">The color to use for the incomplete portion of the LEDs when rendering the progress bar</span>
+            <input type="color" class="input-block-level" id="pauseEffectColor" data-bind="value: settings.plugins.rgb_status.pause_effect_color">
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label" for="progColor">{{ _('Progress Color') }}</label>
+        <label class="control-label" for="pauseEffectDelay">{{ _('Pause Effect Delay') }}</label>
         <div class="controls">
-            <input type="color" class="input-block-level jscolor" id="progColor" data-bind="value: settings.plugins.rgb_status.progress_color">
-	    <span class="help-inline">The color to use for the complete portion of the LEDs when rendering the progress bar</span>
+            <input type="number" class="input-block-level" id="pauseEffectDelay" data-bind="value: settings.plugins.rgb_status.pause_effect_delay">
+        </div>
+    </div>
+
+    <h4>Print Failed Effect Settings</h4>
+    <p>Configure the effect that is run when a print fails.</p>
+    <div class="control-group">
+        <label class="control-label" for="failEffect">{{ _('Fail Effect') }}</label>
+        <div class="controls">
+            <select class="input-block-level" id="failEffect" data-bind="value: settings.plugins.rgb_status.fail_effect">
+		{% for effect in plugin_rgb_status_effects %}
+	            <option value="{{ effect }}">{{ effect }}</option>
+		{% endfor %}
+	    </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="failEffectColor">{{ _('Fail Effect Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level" id="failEffectColor" data-bind="value: settings.plugins.rgb_status.fail_effect_color">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="failEffectDelay">{{ _('Fail Effect Delay') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="failEffectDelay" data-bind="value: settings.plugins.rgb_status.fail_effect_delay">
+        </div>
+    </div>
+
+    <h4>Print Finished Effect Settings</h4>
+    <p>Configure the effect that is run when a print finishes.</p>
+    <div class="control-group">
+        <label class="control-label" for="doneEffect">{{ _('Finish Effect') }}</label>
+        <div class="controls">
+            <select class="input-block-level" id="doneEffect" data-bind="value: settings.plugins.rgb_status.done_effect">
+		{% for effect in plugin_rgb_status_effects %}
+	            <option value="{{ effect }}">{{ effect }}</option>
+		{% endfor %}
+	    </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="doneEffectColor">{{ _('Finish Effect Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level" id="doneEffectColor" data-bind="value: settings.plugins.rgb_status.done_effect_color">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="doneEffectDelay">{{ _('Finish Effect Delay') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="doneEffectDelay" data-bind="value: settings.plugins.rgb_status.done_effect_delay">
         </div>
     </div>
 </form>

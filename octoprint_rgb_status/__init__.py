@@ -164,6 +164,18 @@ class RGBStatusPlugin(
             'idle_effect': 'Solid Color',
             'idle_effect_color': '#00ff00',
             'idle_effect_delay': 10,
+
+            'pause_effect': 'Solid Color',
+            'pause_effect_color': '#f89406',
+            'pause_effect_delay': 10,
+
+            'fail_effect': 'Pulse',
+            'fail_effect_color': '#ff0000',
+            'fail_effect_delay': 10,
+
+            'done_effect': 'Pulse',
+            'done_effect_color': '#00ff00',
+            'done_effect_delay': 10,
         }
 
     def on_settings_save(self, data):
@@ -234,11 +246,41 @@ class RGBStatusPlugin(
             self._settings.get_int(['idle_effect_delay']),
         )
 
+    def run_pause_effect(self):
+        self._logger.info('Starting Pause Effect')
+        self.run_effect(
+            self._settings.get(['pause_effect']),
+            hex_to_rgb(self._settings.get(['pause_effect_color'])),
+            self._settings.get_int(['pause_effect_delay']),
+        )
+
+    def run_fail_effect(self):
+        self._logger.info('Starting Fail Effect')
+        self.run_effect(
+            self._settings.get(['fail_effect']),
+            hex_to_rgb(self._settings.get(['fail_effect_color'])),
+            self._settings.get_int(['fail_effect_delay']),
+        )
+
+    def run_done_effect(self):
+        self._logger.info('Starting Done Effect')
+        self.run_effect(
+            self._settings.get(['done_effect']),
+            hex_to_rgb(self._settings.get(['done_effect_color'])),
+            self._settings.get_int(['done_effect_delay']),
+        )
+
     def on_event(self, event, payload):
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             self.run_effect('Solid Color', progress_base_color, delay=10)
-        elif event in ['PrintDone', 'PrintCancelled']:
+        elif event == 'PrintFailed':
+            self.run_fail_effect()
+        elif event == 'PrintPaused':
+            self.run_pause_effect()
+        elif event == 'PrintDone':
+            self.run_done_effect()
+        elif event == 'PrintCancelled':
             self.run_idle_effect()
 
     def on_print_progress(self, storage, path, progress):
