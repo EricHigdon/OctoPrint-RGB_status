@@ -1,4 +1,5 @@
 from rpi_ws281x import *
+from .utils import blend_colors
 import time
 
 
@@ -25,11 +26,11 @@ def color_wipe(strip, color, delay=50, iterations=1):
         for p in range(strip.numPixels()):
             strip.setPixelColorRGB(p, *color)
             strip.show()
-            time.sleep(delay/1000.0)
+            time.sleep(delay/100.0)
         for p in range(strip.numPixels()):
             strip.setPixelColorRGB(p, 0, 0, 0)
         strip.show()
-        time.sleep(delay/1000.0)
+        time.sleep(delay/100.0)
 
 
 def theater_chase(strip, color, delay=50, iterations=10):
@@ -84,3 +85,36 @@ def theater_chase_rainbow(strip, color=None, delay=50, iterations=1):
             time.sleep(delay/1000.0)
             for p in range(0, strip.numPixels(), 3):
                 strip.setPixelColor(p+r, 0)
+
+
+def pulse(strip, color, delay, iterations=1):
+    for p in range(strip.numPixels()):
+        strip.setPixelColorRGB(p, *color)
+    for i in range(255):
+        strip.setBrightness(i)
+        strip.show()
+        time.sleep(delay/1000.0)
+    for i in reversed(range(255)):
+        strip.setBrightness(i)
+        strip.show()
+        time.sleep(delay/1000.0)
+
+
+def knight_rider(strip, color, delay, iterations=1):
+    for active_pixel in range(strip.numPixels()):
+        for i in range(strip.numPixels()):
+            if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
+                strip.setPixelColorRGB(i, *color)
+            else:
+                strip.setPixelColorRGB(i, *(0,0,0))
+        strip.show()
+        time.sleep(delay/100.0)
+    for active_pixel in reversed(range(strip.numPixels())):
+        for i in range(strip.numPixels()):
+            if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
+                strip.setPixelColorRGB(i, *color)
+            else:
+                strip.setPixelColorRGB(i, *(0,0,0))
+        strip.show()
+        time.sleep(delay/100.0)
+        

@@ -33,18 +33,114 @@ EFFECTS = {
     'Theater Chase': theater_chase,
     'Rainbow': rainbow,
     'Rainbow Cycle': rainbow_cycle,
-    'Theater Chase Rainbow': theater_chase_rainbow
+    'Theater Chase Rainbow': theater_chase_rainbow,
+    'Pulse': pulse,
+    'Knight Rider': knight_rider,
 }
 
 
 class RGBStatusPlugin(
-	plugin.RestartNeedingPlugin,
+        plugin.AssetPlugin,
 	plugin.StartupPlugin,
 	plugin.ProgressPlugin,
 	plugin.EventHandlerPlugin,
 	plugin.SettingsPlugin,
 	plugin.TemplatePlugin,
-        plugin.ShutdownPlugin):
+        plugin.ShutdownPlugin,
+        plugin.SimpleApiPlugin,
+        plugin.WizardPlugin):
+
+    api_errors = []
+
+    def is_wizard_required(self):
+        return any([not value for key, value in self.get_wizard_details().items()])
+
+    def get_wizard_version(self):
+        return 3
+
+    def get_wizard_details(self):
+        return {
+            'adduser_done': self.adduser_done(),
+            'spi_enabled': self.spi_enabled(),
+            'buffer_increased': self.buffer_increased(),
+            'frequency_set': self.frequency_set(),
+        }
+
+    def get_api_commands(self):
+        return {
+            'adduser': ['password'],
+            'enable_spi': ['password'],
+            'increase_buffer': ['password'],
+            'set_frequency': ['password'],
+        }
+
+    def run_command(self, command, password=None):
+        from subprocess import Popen, PIPE
+        if not isinstance(command, list):
+            command = command.split()
+        proc = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        if password is not None:
+            stdout, stderr = proc.communicate('{}\n'.format(password).encode())
+        else:
+            stdout, stderr = proc.communicate()
+        if stderr and 'incorrect password attempt' in stderr:
+            self.api_errors.append('Incorrect password attempt')
+            self._logger.error(stderr)
+        else:
+            return stdout
+
+    def adduser_done(self):
+        user_groups = self.run_command('groups pi').split()
+        return 'gpio' in user_groups
+
+    def spi_enabled(self):
+        with open('/boot/config.txt') as file:
+            for line in file:
+                if line.startswith('dtparam=spi=on'):
+                    return True
+        return False
+
+    def buffer_increased(self):
+        with open('/boot/cmdline.txt') as file:
+            for line in file:
+                if 'spidev.bufsiz=' in line:
+                    return True
+        return False
+
+    def frequency_set(self):
+        with open('/boot/config.txt') as file:
+            for line in file:
+                if line.startswith('core_freq=250'):
+                    return True
+        return False
+
+    def build_response(self):
+        import flask
+        details = self.get_wizard_details()
+        details.update({'errors': self.api_errors})
+        self.api_errors = []
+        return flask.jsonify(details)
+
+    def on_api_command(self, command, data):
+        output = ''
+        self._logger.info('{} command called'.format(command))
+        password = data.get('password', None)
+        cmd = ''
+        if command == 'adduser':
+            cmd = 'sudo -S adduser pi gpio' 
+        elif command == 'enable_spi' and not self.spi_enabled():
+            cmd = ['sudo', '-S', 'bash', '-c', 'echo dtparam=spi=on >> /boot/config.txt']
+        elif command == 'increase_buffer' and not self.buffer_increased():
+            cmd = ['sudo', '-S', 'sed', '-i', '$ s/$/ spidev.bufsiz=32768/', '/boot/cmdline.txt']
+        elif command == 'set_frequency' and not self.frequency_set():
+            cmd = ['sudo', '-S', 'bash', '-c', 'echo core_freq=250 >> /boot/config.txt']
+        if cmd:
+            stdout = self.run_command(cmd, password=password)
+
+        return self.build_response()
+
+    def on_api_get(self, request):
+        return self.build_response()
 
     def get_settings_defaults(self):
         return {
@@ -68,6 +164,18 @@ class RGBStatusPlugin(
             'idle_effect': 'Solid Color',
             'idle_effect_color': '#00ff00',
             'idle_effect_delay': 10,
+
+            'pause_effect': 'Solid Color',
+            'pause_effect_color': '#f89406',
+            'pause_effect_delay': 10,
+
+            'fail_effect': 'Pulse',
+            'fail_effect_color': '#ff0000',
+            'fail_effect_delay': 10,
+
+            'done_effect': 'Pulse',
+            'done_effect_color': '#00ff00',
+            'done_effect_delay': 10,
         }
 
     def on_settings_save(self, data):
@@ -92,11 +200,18 @@ class RGBStatusPlugin(
 
     def get_template_configs(self):
         return [
-            {'type': 'settings', 'custom_bindings':False}
+            {'type': 'settings', 'custom_bindings':False},
+            {'type': 'wizard', 'mandatory': True}
         ]
 
     def get_template_vars(self):
         return {'effects': EFFECTS, 'strip_types': STRIP_TYPES}
+
+    def get_assets(self):
+        return {
+            'js': ['js/rgb_status.js'],
+            'css': ['css/rgb_status.css']
+        }
 
     def init_strip(self):
         settings = []
@@ -131,13 +246,42 @@ class RGBStatusPlugin(
             self._settings.get_int(['idle_effect_delay']),
         )
 
+    def run_pause_effect(self):
+        self._logger.info('Starting Pause Effect')
+        self.run_effect(
+            self._settings.get(['pause_effect']),
+            hex_to_rgb(self._settings.get(['pause_effect_color'])),
+            self._settings.get_int(['pause_effect_delay']),
+        )
+
+    def run_fail_effect(self):
+        self._logger.info('Starting Fail Effect')
+        self.run_effect(
+            self._settings.get(['fail_effect']),
+            hex_to_rgb(self._settings.get(['fail_effect_color'])),
+            self._settings.get_int(['fail_effect_delay']),
+        )
+
+    def run_done_effect(self):
+        self._logger.info('Starting Done Effect')
+        self.run_effect(
+            self._settings.get(['done_effect']),
+            hex_to_rgb(self._settings.get(['done_effect_color'])),
+            self._settings.get_int(['done_effect_delay']),
+        )
+
     def on_event(self, event, payload):
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             self.run_effect('Solid Color', progress_base_color, delay=10)
-        elif event in ['PrintDone', 'PrintCancelled']:
+        elif event == 'PrintFailed':
+            self.run_fail_effect()
+        elif event == 'PrintPaused':
+            self.run_pause_effect()
+        elif event == 'PrintDone':
+            self.run_done_effect()
+        elif event == 'PrintCancelled':
             self.run_idle_effect()
-
 
     def on_print_progress(self, storage, path, progress):
 	if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
@@ -204,4 +348,6 @@ class RGBStatusPlugin(
 __plugin_name__ = 'RGB Status'
 __plugin_pythoncompat__ = ">=2.7,<4"
 __plugin_implementation__ = RGBStatusPlugin()
-__plugin_hooks__ = {"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information}
+__plugin_hooks__ = {
+    'octoprint.plugin.softwareupdate.check_config': __plugin_implementation__.get_update_information,
+}
