@@ -151,6 +151,7 @@ class RGBStatusPlugin(
             'led_brightness': 255,
             'led_invert': False,
             'led_channel': 0,
+            'only_when_connected': False,
             'strip_type': 'WS2811_STRIP_GRB',
 
             'show_progress': True,
@@ -228,12 +229,13 @@ class RGBStatusPlugin(
         except Exception as e:
             self._logger.error(e)
             self.strip = None
-        self.run_effect(
-            self._settings.get(['init_effect']),
-            hex_to_rgb(self._settings.get(['init_effect_color'])),
-            self._settings.get_int(['init_effect_delay']),
-        )
-        self.run_idle_effect()
+        if self._settings.get_boolean(['only_when_connected']) == False or self._printer.is_operational():
+            self.run_effect(
+                self._settings.get(['init_effect']),
+                hex_to_rgb(self._settings.get(['init_effect_color'])),
+                self._settings.get_int(['init_effect_delay']),
+            )
+            self.run_idle_effect()
 
     def on_after_startup(self):
         self.init_strip()
@@ -282,6 +284,12 @@ class RGBStatusPlugin(
             self.run_done_effect()
         elif event == 'PrintCancelled':
             self.run_idle_effect()
+        elif self._settings.get_boolean(['only_when_connected']) and event == 'Connected':
+            self.run_idle_effect()
+        elif event == 'Disconnected':
+            self._logger.info('Disconnected; Killing Effect')
+            self.kill_effect()
+            self.run_effect('Solid Color', (0,0,0), 200)
 
     def on_print_progress(self, storage, path, progress):
 	if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():

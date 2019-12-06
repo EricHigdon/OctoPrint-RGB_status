@@ -59,6 +59,14 @@
 	    <span class="help-inline">Set to '1' for GPIOs 13, 19, 41, 45 or 53</span>
         </div>
     </div>
+    <div class="control-group">
+        <label class="control-label" for="connectedOnly">{{ _('Only when connected') }}</label>
+        <div class="controls">
+            <input type="checkbox" class="input-block-level" id="connectedOnly" data-bind="checked: settings.plugins.rgb_status.only_when_connected">
+            <span class="help-inline">Activate the LED strip only when the printer is connected to octoprint.</span>
+        </div>
+    </div>
+
 
     <h4>Progress Bar Settings</h4>
     <div class="control-group">
