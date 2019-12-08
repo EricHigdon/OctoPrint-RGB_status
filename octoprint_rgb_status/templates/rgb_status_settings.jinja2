@@ -59,14 +59,6 @@
 	    <span class="help-inline">Set to '1' for GPIOs 13, 19, 41, 45 or 53</span>
         </div>
     </div>
-    <div class="control-group">
-        <label class="control-label" for="connectedOnly">{{ _('Only when connected') }}</label>
-        <div class="controls">
-            <input type="checkbox" class="input-block-level" id="connectedOnly" data-bind="checked: settings.plugins.rgb_status.only_when_connected">
-            <span class="help-inline">Activate the LED strip only when the printer is connected to octoprint.</span>
-        </div>
-    </div>
-
 
     <h4>Progress Bar Settings</h4>
     <div class="control-group">
@@ -213,6 +205,31 @@
         <label class="control-label" for="doneEffectDelay">{{ _('Finish Effect Delay') }}</label>
         <div class="controls">
             <input type="number" class="input-block-level" id="doneEffectDelay" data-bind="value: settings.plugins.rgb_status.done_effect_delay">
+        </div>
+    </div>
+
+    <h4>Disconnected Effect Settings</h4>
+    <p>Configure the effect that is run when the printer is not connected.</p>
+    <div class="control-group">
+        <label class="control-label" for="disconnectedEffect">{{ _('Disconnected Effect') }}</label>
+        <div class="controls">
+            <select class="input-block-level" id="disconnectedEffect" data-bind="value: settings.plugins.rgb_status.disconnected_effect">
+		{% for effect in plugin_rgb_status_effects %}
+	            <option value="{{ effect }}">{{ effect }}</option>
+		{% endfor %}
+	    </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="disconnectedEffectColor">{{ _('Disconnected Effect Color') }}</label>
+        <div class="controls">
+            <input type="color" class="input-block-level" id="disconnectedEffectColor" data-bind="value: settings.plugins.rgb_status.disconnected_effect_color">
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="disconnectedEffectDelay">{{ _('Disconnected Effect Delay') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="disconnectedEffectDelay" data-bind="value: settings.plugins.rgb_status.disconnected_effect_delay">
         </div>
     </div>
 </form>
