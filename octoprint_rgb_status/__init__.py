@@ -27,6 +27,7 @@ STRIP_TYPES = {
     'SK6812W_STRIP': SK6812W_STRIP,
 }
 IDLE_SETTINGS = ['idle_effect', 'idle_effect_color', 'idle_effect_delay', 'idle_effect_iterations']
+DISCONNECTED_SETTINGS = ['disconnected_effect', 'disconnected_effect_color', 'disconnected_effect_delay', 'disconnected_effect_iterations']
 EFFECTS = {
     'Solid Color': solid_color,
     'Color Wipe': color_wipe,
@@ -176,6 +177,10 @@ class RGBStatusPlugin(
             'done_effect': 'Pulse',
             'done_effect_color': '#00ff00',
             'done_effect_delay': 10,
+
+            'disconnected_effect': 'Solid Color',
+            'disconnected_effect_color': '#000000',
+            'disconnected_effect_delay': 10,
         }
 
     def on_settings_save(self, data):
@@ -186,16 +191,25 @@ class RGBStatusPlugin(
         old_idle_settings = {}
         for setting in IDLE_SETTINGS:
             old_idle_settings[setting] = self._settings.get([setting])
+        old_disconnected_settings = {}
+        for setting in DISCONNECTED_SETTINGS:
+            old_disconnected_settings[setting] = self._settings.get([setting])
 
         changed_settings = plugin.SettingsPlugin.on_settings_save(self, data)
         for setting in STRIP_SETTINGS:
             if old_strip_settings[setting] != self._settings.get([setting]):
                 self.init_strip()
                 break
-        for setting in IDLE_SETTINGS:
-            if old_idle_settings[setting] != self._settings.get([setting]):
-                self.run_idle_effect()
-                break
+        if self._printer.is_operational():
+            for setting in IDLE_SETTINGS:
+                if old_idle_settings[setting] != self._settings.get([setting]):
+                    self.run_idle_effect()
+                    break
+        else:
+            for setting in DISCONNECTED_SETTINGS:
+                if old_disconnected_settings[setting] != self._settings.get([setting]):
+                    self.run_disconnected_effect()
+                    break
         return changed_settings
 
     def get_template_configs(self):
@@ -233,7 +247,10 @@ class RGBStatusPlugin(
             hex_to_rgb(self._settings.get(['init_effect_color'])),
             self._settings.get_int(['init_effect_delay']),
         )
-        self.run_idle_effect()
+        if self._printer.is_operational():
+            self.run_idle_effect()
+        else:
+            self.run_disconnected_effect()
 
     def on_after_startup(self):
         self.init_strip()
@@ -270,6 +287,14 @@ class RGBStatusPlugin(
             self._settings.get_int(['done_effect_delay']),
         )
 
+    def run_disconnected_effect(self):
+        self._logger.info('Starting Disconnected Effect')
+        self.run_effect(
+            self._settings.get(['disconnected_effect']),
+            hex_to_rgb(self._settings.get(['disconnected_effect_color'])),
+            self._settings.get_int(['disconnected_effect_delay']),
+        )
+
     def on_event(self, event, payload):
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
@@ -282,6 +307,10 @@ class RGBStatusPlugin(
             self.run_done_effect()
         elif event == 'PrintCancelled':
             self.run_idle_effect()
+        elif event == 'Connected':
+            self.run_idle_effect()
+        elif event == 'Disconnected':
+            self.run_disconnected_effect()
 
     def on_print_progress(self, storage, path, progress):
 	if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
