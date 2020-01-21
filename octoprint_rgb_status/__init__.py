@@ -73,6 +73,7 @@ class RGBStatusPlugin(
             'enable_spi': ['password'],
             'increase_buffer': ['password'],
             'set_frequency': ['password'],
+            'flipswitch':[]
         }
 
     def run_command(self, command, password=None):
@@ -118,7 +119,10 @@ class RGBStatusPlugin(
     def build_response(self):
         import flask
         details = self.get_wizard_details()
-        details.update({'errors': self.api_errors})
+        details.update({
+            'errors': self.api_errors,
+            'lightsOn': getattr(self, '_lightsOn', True)
+        })
         self.api_errors = []
         return flask.jsonify(details)
 
@@ -127,6 +131,15 @@ class RGBStatusPlugin(
         self._logger.info('{} command called'.format(command))
         password = data.get('password', None)
         cmd = ''
+        if command == 'flipswitch':
+            import flask
+            if getattr(self, '_lightsOn', True):
+                self.run_effect('Solid Color', (0, 0, 0,), delay=10)
+                self._lightsOn = False
+            else:
+                self._lightsOn = True
+                self.run_idle_effect()
+            return flask.jsonify({'lightsOn': self._lightsOn})
         if command == 'adduser':
             cmd = 'sudo -S adduser pi gpio' 
         elif command == 'enable_spi' and not self.spi_enabled():
@@ -215,7 +228,7 @@ class RGBStatusPlugin(
     def get_template_configs(self):
         return [
             {'type': 'settings', 'custom_bindings':False},
-            {'type': 'wizard', 'mandatory': True}
+            {'type': 'wizard', 'mandatory': True},
         ]
 
     def get_template_vars(self):
@@ -239,9 +252,11 @@ class RGBStatusPlugin(
         try:
             self.strip = Adafruit_NeoPixel(*settings)
             self.strip.begin()
+            self._lightsOn = True
         except Exception as e:
             self._logger.error(e)
             self.strip = None
+            self._lightsOn = False
         self.run_effect(
             self._settings.get(['init_effect']),
             hex_to_rgb(self._settings.get(['init_effect_color'])),
@@ -332,15 +347,18 @@ class RGBStatusPlugin(
         elif self.strip is None:
             self._logger.error('Error setting progress: The strip object does not exist. Did it fail to initialize?')
 
+    def effect_is_alive(self):
+        return hasattr(self, '_effect') and self._effect.is_alive()
+
     def kill_effect(self):
-        if hasattr(self, '_effect') and self._effect.is_alive():
+        if self.effect_is_alive():
             self._queue.put('KILL')
             self._effect.join()
             self._effect.terminate()
             self._logger.info('Killed effect: ' + self._effect.name)
 
     def run_effect(self, effect_name, color=None, delay=50, iterations=1):
-        if self.strip is not None:
+        if getattr(self, 'strip', None) is not None and getattr(self, '_lightsOn', False):
             effect = EFFECTS.get(effect_name)
             if effect is not None:
                 if not hasattr(self, '_queue'):
@@ -354,7 +372,7 @@ class RGBStatusPlugin(
                 self._logger.info('Started new effect {}'.format(self._effect))
             else:
                 self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))
-        else:
+        elif getattr(self, 'strip', None) is None:
             self._logger.error('Error running effect: The strip object does not exist. Did it fail to initialize?')
 
     def on_shutdown(self):

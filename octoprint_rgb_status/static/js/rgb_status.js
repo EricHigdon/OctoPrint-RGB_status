@@ -81,4 +81,28 @@ $(function() {
 		dependencies: ['wizardViewModel'],
 		elements: ['#wizard_plugin_rgb_status']
 	});
+	
+	function RGBStatusNavbarViewModel(parameters) {
+		var self = this;
+		self.url = OctoPrint.getSimpleApiUrl('rgb_status');
+		self.lightsOn = 'on';
+		self.onOrOff = function(response){
+			self.lightsOn = response.lightsOn ? 'on': 'off';
+		}
+		self.flipSwitch = function() {
+        		OctoPrint.postJson(self.url, {"command": "flipswitch"}).done(function(response){
+				self.onOrOff(response);
+				var element = $('#navbar_plugin_rgb_status a');
+				element.removeClass();
+				element.addClass(self.lightsOn);
+			});
+		}
+		self.onBeforeBinding = function() {
+			OctoPrint.get(self.url).done(self.onOrOff);
+		}
+	}
+	OCTOPRINT_VIEWMODELS.push({
+		construct: RGBStatusNavbarViewModel,
+		elements: ['#navbar_plugin_rgb_status']
+	});
 });
