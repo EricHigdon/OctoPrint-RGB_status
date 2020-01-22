@@ -7,39 +7,45 @@ def run_effect(effect, lock, queue, strip, color, delay):
     lock.acquire()
     try:
         while queue.empty():
-            effect(strip, color, delay)
+            effect(strip, color, queue, delay)
         while not queue.empty():
             queue.get()
     finally:
         lock.release()
 
 # Define functions which animate LEDs in various ways.
-def solid_color(strip, color, delay=0, iterations=1):
+def solid_color(strip, color, queue, delay=0, iterations=1):
     for p in range(strip.numPixels()):
         strip.setPixelColorRGB(p, *color)
     strip.show()
 
 
-def color_wipe(strip, color, delay=50, iterations=1):
+def color_wipe(strip, color, queue, delay=50, iterations=1):
     """Wipe color across display a pixel at a time."""
     for i in range(iterations):
         for p in range(strip.numPixels()):
             strip.setPixelColorRGB(p, *color)
-            strip.show()
+        strip.show()
+        if not queue.empty():
+            return
             time.sleep(delay/100.0)
         for p in range(strip.numPixels()):
             strip.setPixelColorRGB(p, 0, 0, 0)
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/100.0)
 
 
-def theater_chase(strip, color, delay=50, iterations=10):
+def theater_chase(strip, color, queue, delay=50, iterations=10):
     """Movie theater light style chaser animation."""
     for i in range(iterations):
         for r in range(3):
             for p in range(0, strip.numPixels(), 3):
                 strip.setPixelColorRGB(p+r, *color)
             strip.show()
+            if not queue.empty():
+                return
             time.sleep(delay/1000.0)
             for p in range(0, strip.numPixels(), 3):
                 strip.setPixelColor(p+r, 0)
@@ -57,50 +63,60 @@ def wheel(pos):
         return Color(0, pos * 3, 255 - pos * 3)
 
 
-def rainbow(strip, color=None, delay=20, iterations=1):
+def rainbow(strip, color, queue, delay=20, iterations=1):
     """Draw rainbow that fades across all pixels at once."""
     for i in range(256*iterations):
         for p in range(strip.numPixels()):
             strip.setPixelColor(p, wheel((p+i) & 255))
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/1000.0)
 
 
-def rainbow_cycle(strip, color=None, delay=20, iterations=5):
+def rainbow_cycle(strip, color, queue, delay=20, iterations=5):
     """Draw rainbow that uniformly distributes itself across all pixels."""
     for i in range(256*iterations):
         for p in range(strip.numPixels()):
             strip.setPixelColor(p, wheel((int(p * 256 / strip.numPixels()) + i) & 255))
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/1000.0)
 
 
-def theater_chase_rainbow(strip, color=None, delay=50, iterations=1):
+def theater_chase_rainbow(strip, color, queue, delay=50, iterations=1):
     """Rainbow movie theater light style chaser animation."""
     for i in range(256*iterations):
         for r in range(3):
             for p in range(0, strip.numPixels(), 3):
                 strip.setPixelColor(p+r, wheel((p+i) % 255))
             strip.show()
+            if not queue.empty():
+                return
             time.sleep(delay/1000.0)
             for p in range(0, strip.numPixels(), 3):
                 strip.setPixelColor(p+r, 0)
 
 
-def pulse(strip, color, delay, iterations=1):
+def pulse(strip, color, queue, delay, iterations=1):
     for p in range(strip.numPixels()):
         strip.setPixelColorRGB(p, *color)
     for i in range(255):
         strip.setBrightness(i)
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/1000.0)
     for i in reversed(range(255)):
         strip.setBrightness(i)
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/1000.0)
 
 
-def knight_rider(strip, color, delay, iterations=1):
+def knight_rider(strip, color, queue, delay, iterations=1):
     for active_pixel in range(strip.numPixels()):
         for i in range(strip.numPixels()):
             if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
@@ -108,6 +124,8 @@ def knight_rider(strip, color, delay, iterations=1):
             else:
                 strip.setPixelColorRGB(i, *(0,0,0))
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/100.0)
     for active_pixel in reversed(range(strip.numPixels())):
         for i in range(strip.numPixels()):
@@ -116,5 +134,7 @@ def knight_rider(strip, color, delay, iterations=1):
             else:
                 strip.setPixelColorRGB(i, *(0,0,0))
         strip.show()
+        if not queue.empty():
+            return
         time.sleep(delay/100.0)
         

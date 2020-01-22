@@ -135,6 +135,7 @@ class RGBStatusPlugin(
             import flask
             if getattr(self, '_lightsOn', True):
                 self.run_effect('Solid Color', (0, 0, 0,), delay=10)
+                self.kill_effect()
                 self._lightsOn = False
             else:
                 self._lightsOn = True
