@@ -51,6 +51,9 @@
 	color: #f33;
 	font-weight: bold;
 }
-#navbar_plugin_rgb_status a.on i {
-	background: linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(0,255,0,1) 35%, rgba(0,0,255,1) 100%);
+#navbar .navbar-inner .nav>#navbar_plugin_rgb_status>a.on, #navbar .navbar-inner .nav>#navbar_plugin_rgb_status>a.on:hover {
+    background-image: url(/plugin/rgb_status/static/img/splash.png);
+    background-size: 50%;
+    background-repeat: no-repeat;
+    background-position: center 35%;
 }
