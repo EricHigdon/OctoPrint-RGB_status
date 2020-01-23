@@ -26,7 +26,7 @@ STRIP_TYPES = {
     'SK6812_STRIP': SK6812_STRIP,
     'SK6812W_STRIP': SK6812W_STRIP,
 }
-IDLE_SETTINGS = ['idle_effect', 'idle_effect_color', 'idle_effect_delay', 'idle_effect_iterations']
+IDLE_SETTINGS = ['idle_effect', 'idle_effect_color', 'idle_effect_delay', 'idle_effect_iterations', 'leds_reversed']
 DISCONNECTED_SETTINGS = ['disconnected_effect', 'disconnected_effect_color', 'disconnected_effect_delay', 'disconnected_effect_iterations']
 EFFECTS = {
     'Solid Color': solid_color,
@@ -135,7 +135,6 @@ class RGBStatusPlugin(
             import flask
             if getattr(self, '_lightsOn', True):
                 self.run_effect('Solid Color', (0, 0, 0,), delay=10)
-                self.kill_effect()
                 self._lightsOn = False
             else:
                 self._lightsOn = True
@@ -167,6 +166,7 @@ class RGBStatusPlugin(
             'led_invert': False,
             'led_channel': 0,
             'strip_type': 'WS2811_STRIP_GRB',
+            'leds_reversed': False,
 
             'show_progress': True,
             'progress_base_color': '#ffffff',
@@ -337,10 +337,19 @@ class RGBStatusPlugin(
             perc = float(progress) / 100 * float(self.strip.numPixels())
             base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             progress_color = hex_to_rgb(self._settings.get(['progress_color']))
-            for i in range(self.strip.numPixels()):
-                if i+1 <= int(perc):
+            pixels_range = range(strip.numPixels())
+            pixels_reversed = self._settings.get(['leds_reversed'])
+            if pixels_reversed:
+                pixels_range = list(reversed(pixels_range))
+
+            for i in pixels_range:
+                if pixels_reversed:
+                    index = i - 1
+                else:
+                    index = i + 1
+                if index <= int(perc):
                     self.strip.setPixelColorRGB(i, *progress_color)
-                elif i+1 == int(perc)+1:
+                elif index == int(perc)+1:
                     self.strip.setPixelColorRGB(i, *blend_colors(base_color, progress_color, (perc % 1)))
                 else:
                     self.strip.setPixelColorRGB(i, *base_color)
@@ -367,8 +376,9 @@ class RGBStatusPlugin(
                 if not hasattr(self, '_lock'):
                     self._lock = multiprocessing.Lock()
                 self.kill_effect()
+                reverse = self._settings.get_boolean(['leds_reversed'])
                 self._logger.info('Starting new effect {}'.format(effect_name))
-                self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay), name=effect_name)
+                self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay, reverse), name=effect_name)
                 self._effect.start()
                 self._logger.info('Started new effect {}'.format(self._effect))
             else:

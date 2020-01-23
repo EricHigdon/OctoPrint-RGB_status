@@ -59,6 +59,13 @@
 	    <span class="help-inline">Set to '1' for GPIOs 13, 19, 41, 45 or 53</span>
         </div>
     </div>
+    <div class="control-group">
+        <label class="control-label" for="ledReversed">{{ _('LED Order Reversed') }}</label>
+        <div class="controls">
+            <input type="checkbox" class="input-block-level" id="ledReversed" data-bind="checked: settings.plugins.rgb_status.leds_reversed">
+	    <span class="help-inline">Check to reverse the order of effects. For example if you have LEDs mounted on top of the printer from right to left.</span>
+        </div>
+    </div>
 
     <h4>Progress Bar Settings</h4>
     <div class="control-group">

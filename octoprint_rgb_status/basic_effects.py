@@ -3,33 +3,37 @@ from .utils import blend_colors
 import time
 
 
-def run_effect(effect, lock, queue, strip, color, delay):
+def run_effect(effect, lock, queue, strip, color, delay, reverse=False):
     lock.acquire()
     try:
         while queue.empty():
-            effect(strip, color, queue, delay)
+            effect(strip, color, queue, delay, reverse=reverse)
         while not queue.empty():
             queue.get()
     finally:
         lock.release()
 
 # Define functions which animate LEDs in various ways.
-def solid_color(strip, color, queue, delay=0, iterations=1):
+def solid_color(strip, color, queue, delay=0, iterations=1, reverse=False):
     for p in range(strip.numPixels()):
         strip.setPixelColorRGB(p, *color)
     strip.show()
 
 
-def color_wipe(strip, color, queue, delay=50, iterations=1):
+def color_wipe(strip, color, queue, delay=50, iterations=1, reverse=False):
     """Wipe color across display a pixel at a time."""
+    pixels_range = range(strip.numPixels())
+    if reverse:
+        pixels_range = list(reversed(pixels_range))
+
     for i in range(iterations):
-        for p in range(strip.numPixels()):
+        for p in pixels_range:
             strip.setPixelColorRGB(p, *color)
-        strip.show()
-        if not queue.empty():
-            return
+            strip.show()
+            if not queue.empty():
+                return
             time.sleep(delay/100.0)
-        for p in range(strip.numPixels()):
+        for p in pixels_range:
             strip.setPixelColorRGB(p, 0, 0, 0)
         strip.show()
         if not queue.empty():
@@ -37,17 +41,21 @@ def color_wipe(strip, color, queue, delay=50, iterations=1):
         time.sleep(delay/100.0)
 
 
-def theater_chase(strip, color, queue, delay=50, iterations=10):
+def theater_chase(strip, color, queue, delay=50, iterations=10, reverse=False):
     """Movie theater light style chaser animation."""
+    pixels_range = range(0, strip.numPixels(), 3)
+    if reverse:
+        pixels_range = list(reversed(pixels_range))
+
     for i in range(iterations):
         for r in range(3):
-            for p in range(0, strip.numPixels(), 3):
+            for p in pixels_range:
                 strip.setPixelColorRGB(p+r, *color)
             strip.show()
             if not queue.empty():
                 return
             time.sleep(delay/1000.0)
-            for p in range(0, strip.numPixels(), 3):
+            for p in pixels_range:
                 strip.setPixelColor(p+r, 0)
 
 
@@ -63,7 +71,7 @@ def wheel(pos):
         return Color(0, pos * 3, 255 - pos * 3)
 
 
-def rainbow(strip, color, queue, delay=20, iterations=1):
+def rainbow(strip, color, queue, delay=20, iterations=1, reverse=False):
     """Draw rainbow that fades across all pixels at once."""
     for i in range(256*iterations):
         for p in range(strip.numPixels()):
@@ -74,7 +82,7 @@ def rainbow(strip, color, queue, delay=20, iterations=1):
         time.sleep(delay/1000.0)
 
 
-def rainbow_cycle(strip, color, queue, delay=20, iterations=5):
+def rainbow_cycle(strip, color, queue, delay=20, iterations=5, reverse=False):
     """Draw rainbow that uniformly distributes itself across all pixels."""
     for i in range(256*iterations):
         for p in range(strip.numPixels()):
@@ -85,7 +93,7 @@ def rainbow_cycle(strip, color, queue, delay=20, iterations=5):
         time.sleep(delay/1000.0)
 
 
-def theater_chase_rainbow(strip, color, queue, delay=50, iterations=1):
+def theater_chase_rainbow(strip, color, queue, delay=50, iterations=1, reverse=False):
     """Rainbow movie theater light style chaser animation."""
     for i in range(256*iterations):
         for r in range(3):
@@ -99,7 +107,7 @@ def theater_chase_rainbow(strip, color, queue, delay=50, iterations=1):
                 strip.setPixelColor(p+r, 0)
 
 
-def pulse(strip, color, queue, delay, iterations=1):
+def pulse(strip, color, queue, delay, iterations=1, reverse=False):
     for p in range(strip.numPixels()):
         strip.setPixelColorRGB(p, *color)
     for i in range(255):
@@ -116,7 +124,7 @@ def pulse(strip, color, queue, delay, iterations=1):
         time.sleep(delay/1000.0)
 
 
-def knight_rider(strip, color, queue, delay, iterations=1):
+def knight_rider(strip, color, queue, delay, iterations=1, reverse=False):
     for active_pixel in range(strip.numPixels()):
         for i in range(strip.numPixels()):
             if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
