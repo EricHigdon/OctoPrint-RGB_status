@@ -337,22 +337,17 @@ class RGBStatusPlugin(
             perc = float(progress) / 100 * float(self.strip.numPixels())
             base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
             progress_color = hex_to_rgb(self._settings.get(['progress_color']))
-            pixels_range = range(strip.numPixels())
-            pixels_reversed = self._settings.get(['leds_reversed'])
+            pixels_reversed = self._settings.get_boolean(['leds_reversed'])
+            pixels_range = range(self.strip.numPixels())
             if pixels_reversed:
-                pixels_range = list(reversed(pixels_range))
-
-            for i in pixels_range:
-                if pixels_reversed:
-                    index = i - 1
+                pixels_range = reversed(pixels_range)
+            for i, p in enumerate(pixels_range):
+                if i+1 <= int(perc):
+                    self.strip.setPixelColorRGB(p, *progress_color)
+                elif i+1 == int(perc)+1:
+                    self.strip.setPixelColorRGB(p, *blend_colors(base_color, progress_color, (perc % 1)))
                 else:
-                    index = i + 1
-                if index <= int(perc):
-                    self.strip.setPixelColorRGB(i, *progress_color)
-                elif index == int(perc)+1:
-                    self.strip.setPixelColorRGB(i, *blend_colors(base_color, progress_color, (perc % 1)))
-                else:
-                    self.strip.setPixelColorRGB(i, *base_color)
+                    self.strip.setPixelColorRGB(p, *base_color)
             self.strip.show()
         elif self.strip is None:
             self._logger.error('Error setting progress: The strip object does not exist. Did it fail to initialize?')
