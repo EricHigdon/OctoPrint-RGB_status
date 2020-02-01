@@ -37,6 +37,7 @@ EFFECTS = {
     'Theater Chase Rainbow': theater_chase_rainbow,
     'Pulse': pulse,
     'Knight Rider': knight_rider,
+    'Plasma': plasma,
 }
 
 
