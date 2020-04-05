@@ -376,7 +376,7 @@ class RGBStatusPlugin(
                 self._logger.info('Killed effect: ' + self._effect.name)
                 break
 
-    def run_effect(self, effect_name, color=None, delay=50, min_time=0):
+    def run_effect(self, effect_name, color=None, delay=50, min_time=0, force=False):
         if getattr(self, 'strip', None) is not None and getattr(self, '_lightsOn', False):
             effect = EFFECTS.get(effect_name)
             if effect is not None:
@@ -384,7 +384,7 @@ class RGBStatusPlugin(
                     self._queue = multiprocessing.Queue()
                 if not hasattr(self, '_lock'):
                     self._lock = multiprocessing.Lock()
-                self.kill_effect()
+                self.kill_effect(force=force)
                 reverse = self._settings.get_boolean(['leds_reversed'])
                 self._logger.info('Starting new effect {}'.format(effect_name))
                 self._effect = multiprocessing.Process(

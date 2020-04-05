@@ -147,13 +147,14 @@ def knight_rider(strip, color, queue, delay, iterations=1, reverse=False):
         time.sleep(delay/100.0)
         
 
-def plasma(strip, color, queue, delay, iterations=1, reverse=False):
+def plasma(strip, color, queue, delay, iterations=1000, reverse=False):
     import colorsys
     import math
     pixels_range = list(range(strip.numPixels()))
-    for f in pixels_range:
-        x = f + 1.0
+    iterations_range = list(range(iterations))
+    for f in iterations_range:
         for i in pixels_range:
+            x = f + i
             hue = 4.0 + math.sin(x / 19.0) + math.sin(i / 9.0) + math.sin((x + i) / 25.0) + math.sin(math.sqrt(x**2.0 + i**2.0) / 8.0)
             rgb = colorsys.hsv_to_rgb(hue/8.0, 1, 1)
             color = tuple([int(round(c * 255.0)) for c in rgb])
@@ -161,11 +162,11 @@ def plasma(strip, color, queue, delay, iterations=1, reverse=False):
         strip.show()
         if not queue.empty():
             return
-        time.sleep(delay/100.0)
+        time.sleep(delay/50.0)
 
-    for f in reversed(pixels_range):
-        x = f + 1.0
+    for f in reversed(iterations_range):
         for i in pixels_range:
+            x = f + i
             hue = 4.0 + math.sin(x / 19.0) + math.sin(i / 9.0) + math.sin((x + i) / 25.0) + math.sin(math.sqrt(x**2.0 + i**2.0) / 8.0)
             rgb = colorsys.hsv_to_rgb(hue/8.0, 1, 1)
             color = tuple([int(round(c * 255.0)) for c in rgb])
@@ -173,4 +174,4 @@ def plasma(strip, color, queue, delay, iterations=1, reverse=False):
         strip.show()
         if not queue.empty():
             return
-        time.sleep(delay/100.0)
+        time.sleep(delay/50.0)
