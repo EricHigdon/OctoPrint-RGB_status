@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from octoprint import plugin
+from datetime import datetime, timedelta
 import multiprocessing
 from rpi_ws281x import *
 from .utils import *
@@ -26,8 +27,8 @@ STRIP_TYPES = {
     'SK6812_STRIP': SK6812_STRIP,
     'SK6812W_STRIP': SK6812W_STRIP,
 }
-IDLE_SETTINGS = ['idle_effect', 'idle_effect_color', 'idle_effect_delay', 'idle_effect_iterations', 'leds_reversed']
-DISCONNECTED_SETTINGS = ['disconnected_effect', 'disconnected_effect_color', 'disconnected_effect_delay', 'disconnected_effect_iterations']
+IDLE_SETTINGS = ['idle_effect', 'idle_effect_color', 'idle_effect_delay', 'leds_reversed']
+DISCONNECTED_SETTINGS = ['disconnected_effect', 'disconnected_effect_color', 'disconnected_effect_delay']
 EFFECTS = {
     'Solid Color': solid_color,
     'Color Wipe': color_wipe,
@@ -135,7 +136,7 @@ class RGBStatusPlugin(
         if command == 'flipswitch':
             import flask
             if getattr(self, '_lightsOn', True):
-                self.run_effect('Solid Color', (0, 0, 0,), delay=10)
+                self.run_effect('Solid Color', (0, 0, 0,), delay=10, force=True)
                 self._lightsOn = False
             else:
                 self._lightsOn = True
@@ -176,6 +177,7 @@ class RGBStatusPlugin(
             'init_effect': 'Rainbow Cycle',
             'init_effect_color': None,
             'init_effect_delay': 20,
+            'init_effect_min_time': 5,
 
             'idle_effect': 'Solid Color',
             'idle_effect_color': '#00ff00',
@@ -263,6 +265,7 @@ class RGBStatusPlugin(
             self._settings.get(['init_effect']),
             hex_to_rgb(self._settings.get(['init_effect_color'])),
             self._settings.get_int(['init_effect_delay']),
+            min_time=self._settings.get_int(['init_effect_min_time'])
         )
         if self._printer.is_operational():
             self.run_idle_effect()
@@ -356,14 +359,24 @@ class RGBStatusPlugin(
     def effect_is_alive(self):
         return hasattr(self, '_effect') and self._effect.is_alive()
 
-    def kill_effect(self):
-        if self.effect_is_alive():
-            self._queue.put('KILL')
-            self._effect.join()
-            self._effect.terminate()
-            self._logger.info('Killed effect: ' + self._effect.name)
+    def effect_can_be_killed(self):
+        if not self.effect_is_alive():
+            return False
+        if self._effect.end_ts < datetime.now():
+            return True
+        else:
+            return False
 
-    def run_effect(self, effect_name, color=None, delay=50, iterations=1):
+    def kill_effect(self, force=False):
+        while self.effect_is_alive():
+            if force or self.effect_can_be_killed():
+                self._queue.put('KILL')
+                self._effect.join()
+                self._effect.terminate()
+                self._logger.info('Killed effect: ' + self._effect.name)
+                break
+
+    def run_effect(self, effect_name, color=None, delay=50, min_time=0):
         if getattr(self, 'strip', None) is not None and getattr(self, '_lightsOn', False):
             effect = EFFECTS.get(effect_name)
             if effect is not None:
@@ -374,8 +387,13 @@ class RGBStatusPlugin(
                 self.kill_effect()
                 reverse = self._settings.get_boolean(['leds_reversed'])
                 self._logger.info('Starting new effect {}'.format(effect_name))
-                self._effect = multiprocessing.Process(target=run_effect, args=(effect, self._lock, self._queue, self.strip, color, delay, reverse), name=effect_name)
+                self._effect = multiprocessing.Process(
+                    target=run_effect,
+                    args=(effect, self._lock, self._queue, self.strip, color, delay, reverse),
+                    name=effect_name
+                )
                 self._effect.start()
+                self._effect.end_ts = datetime.now() + timedelta(seconds=min_time)
                 self._logger.info('Started new effect {}'.format(self._effect))
             else:
                 self._logger.warn('The effect {} was not found. Did you remove that effect?'.format(effect))

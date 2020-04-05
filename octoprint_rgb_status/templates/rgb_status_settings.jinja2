@@ -114,6 +114,13 @@
             <input type="number" class="input-block-level" id="startEffectDelay" data-bind="value: settings.plugins.rgb_status.init_effect_delay">
         </div>
     </div>
+    <div class="control-group">
+        <label class="control-label" for="startEffectDelay">{{ _('Startup Effect Minimum Time') }}</label>
+        <div class="controls">
+            <input type="number" class="input-block-level" id="startEffectDelay" data-bind="value: settings.plugins.rgb_status.init_effect_min_time">
+	    <span class="help-inline">The minimum number of seconds that the startup time will run.</span>
+        </div>
+    </div>
 
     <h4>Idle Effect Settings</h4>
     <p>Configure the effect that is run when OctoPrint is sitting idle</p>
