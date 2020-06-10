@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
 from rpi_ws281x import *
 from .utils import blend_colors
 import time
@@ -7,11 +9,20 @@ def run_effect(effect, lock, queue, strip, color, delay, reverse=False):
     lock.acquire()
     try:
         while queue.empty():
-            effect(strip, color, queue, delay, reverse=reverse)
+            try:
+                effect(strip, color, queue, delay, reverse=reverse)
+            except:
+                pass
         while not queue.empty():
-            queue.get()
+            try:
+                print('emptying queue')
+                queue.get()
+            except:
+                pass
     finally:
+        print('releasing lock')
         lock.release()
+        print('ending process')
 
 # Define functions which animate LEDs in various ways.
 def solid_color(strip, color, queue, delay=0, iterations=1, reverse=False):

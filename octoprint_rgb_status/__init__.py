@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 from octoprint import plugin
 from datetime import datetime, timedelta
 import multiprocessing
@@ -333,8 +333,8 @@ class RGBStatusPlugin(
             self.run_disconnected_effect()
 
     def on_print_progress(self, storage, path, progress):
-	if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
-	    self._logger.info('Progress was set to 100, but the idle effect was already running. Ignoring progress update')
+        if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
+            self._logger.info('Progress was set to 100, but the idle effect was already running. Ignoring progress update')
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self.kill_effect()
             self._logger.info('Updating Progress LEDs: ' + str(progress))
@@ -359,32 +359,43 @@ class RGBStatusPlugin(
     def effect_is_alive(self):
         return hasattr(self, '_effect') and self._effect.is_alive()
 
-    def effect_can_be_killed(self):
+    def effect_can_be_killed(self, force=False):
         if not self.effect_is_alive():
+            self._logger.info("effect is not alive. It can't be killed")
             return False
-        if self._effect.end_ts < datetime.now():
+        if force or self._effect.end_ts < datetime.now():
             return True
         else:
             return False
 
     def kill_effect(self, force=False):
         while self.effect_is_alive():
-            if force or self.effect_can_be_killed():
+            if self.effect_can_be_killed(force=force):
+                self._logger.info('Putting KILL code in queue')
                 self._queue.put('KILL')
+                self._logger.info('Joining Effect process')
                 self._effect.join()
-                self._effect.terminate()
+
+                if hasattr(self._effect, 'close'):
+                    self._logger.info('Closing effect')
+                    self._effect.close()
+                else:
+                    self._logger.info('Terminating effect')
+                    self._effect.terminate()
                 self._logger.info('Killed effect: ' + self._effect.name)
                 break
+        else:
+            self._logger.info('Effect is not alive')
 
     def run_effect(self, effect_name, color=None, delay=50, min_time=0, force=False):
         if getattr(self, 'strip', None) is not None and getattr(self, '_lightsOn', False):
             effect = EFFECTS.get(effect_name)
             if effect is not None:
-                if not hasattr(self, '_queue'):
-                    self._queue = multiprocessing.Queue()
                 if not hasattr(self, '_lock'):
                     self._lock = multiprocessing.Lock()
                 self.kill_effect(force=force)
+                if not hasattr(self, '_queue'):
+                    self._queue = multiprocessing.Queue()
                 reverse = self._settings.get_boolean(['leds_reversed'])
                 self._logger.info('Starting new effect {}'.format(effect_name))
                 self._effect = multiprocessing.Process(
@@ -401,6 +412,10 @@ class RGBStatusPlugin(
             self._logger.error('Error running effect: The strip object does not exist. Did it fail to initialize?')
 
     def on_shutdown(self):
+        self._logger.info('Shutting down RGB Status:')
+        self._logger.info('1. Turning off LEDs')
+        self.run_effect('Solid Color', (0, 0, 0,), delay=10, force=True)
+        self._logger.info('2. Killing the current effect')
         self.kill_effect()
 
     def get_update_information(self, *args, **kwargs):
