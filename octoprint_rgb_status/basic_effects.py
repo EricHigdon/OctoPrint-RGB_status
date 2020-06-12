@@ -2,26 +2,33 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from rpi_ws281x import *
 from .utils import blend_colors
+from datetime import datetime
 import time
+import traceback
 
 
-def run_effect(effect, lock, queue, strip, color, delay, reverse=False):
+def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reverse=False):
     lock.acquire()
+    strip = Adafruit_NeoPixel(*settings)
+    strip.begin()
     try:
-        while queue.empty():
-            try:
-                effect(strip, color, queue, delay, reverse=reverse)
-            except:
-                pass
-        while not queue.empty():
-            try:
-                print('emptying queue')
-                queue.get()
-            except:
-                pass
+        while not shutdown_event.is_set():
+           if not queue.empty():
+               message = queue.get()
+               if message == 'KILL':
+                   print('KILL code found in queue')
+                   break
+           effect(strip, color, queue, delay, reverse=reverse)
     finally:
         print('releasing lock')
         lock.release()
+        print('emptying queue')
+        while not queue.empty():
+            msg = queue.get_nowait()
+        print('closing queue')
+        queue.close()
+        print('joining queue thread')
+        queue.join_thread()
         print('ending process')
 
 # Define functions which animate LEDs in various ways.

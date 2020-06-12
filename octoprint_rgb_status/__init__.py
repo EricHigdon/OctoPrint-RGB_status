@@ -254,8 +254,9 @@ class RGBStatusPlugin(
             else:
                 settings.append(self._settings.get_int([setting]))
         try:
-            self.strip = Adafruit_NeoPixel(*settings)
-            self.strip.begin()
+            #self.strip = Adafruit_NeoPixel(*settings)
+            #self.strip.begin()
+            self.strip = settings
             self._lightsOn = True
         except Exception as e:
             self._logger.error(e)
@@ -273,6 +274,10 @@ class RGBStatusPlugin(
             self.run_disconnected_effect()
 
     def on_after_startup(self):
+        if hasattr(multiprocessing, 'get_context'):
+            self.context = multiprocessing.get_context('spawn')
+        else:
+            self.context = multiprocessing
         self.init_strip()
 
     def run_idle_effect(self):
@@ -373,13 +378,12 @@ class RGBStatusPlugin(
             if self.effect_can_be_killed(force=force):
                 self._logger.info('Putting KILL code in queue')
                 self._queue.put('KILL')
+                delattr(self, '_queue')
+                self._shutdown_event.set()
+                delattr(self, '_shutdown_event')
                 self._logger.info('Joining Effect process')
-                self._effect.join()
-
-                if hasattr(self._effect, 'close'):
-                    self._logger.info('Closing effect')
-                    self._effect.close()
-                else:
+                self._effect.join(3)
+                if self._effect.is_alive():
                     self._logger.info('Terminating effect')
                     self._effect.terminate()
                 self._logger.info('Killed effect: ' + self._effect.name)
@@ -392,15 +396,17 @@ class RGBStatusPlugin(
             effect = EFFECTS.get(effect_name)
             if effect is not None:
                 if not hasattr(self, '_lock'):
-                    self._lock = multiprocessing.Lock()
+                    self._lock = self.context.Lock()
                 self.kill_effect(force=force)
                 if not hasattr(self, '_queue'):
-                    self._queue = multiprocessing.Queue()
+                    self._queue = self.context.Queue()
+                if not hasattr(self, '_shutdown_event'):
+                    self._shutdown_event = self.context.Event()
                 reverse = self._settings.get_boolean(['leds_reversed'])
                 self._logger.info('Starting new effect {}'.format(effect_name))
-                self._effect = multiprocessing.Process(
+                self._effect = self.context.Process(
                     target=run_effect,
-                    args=(effect, self._lock, self._queue, self.strip, color, delay, reverse),
+                    args=(effect, self._lock, self._queue, self.strip, color, delay, self._shutdown_event, reverse),
                     name=effect_name
                 )
                 self._effect.start()
