@@ -16,20 +16,16 @@ def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reve
            if not queue.empty():
                message = queue.get()
                if message == 'KILL':
-                   print('KILL code found in queue')
                    break
+               else:
+                   kwargs['progress'] = int(message)
            effect(strip, color, queue, delay, reverse=reverse, **kwargs)
     finally:
-        print('releasing lock')
         lock.release()
-        print('emptying queue')
         while not queue.empty():
             msg = queue.get_nowait()
-        print('closing queue')
         queue.close()
-        print('joining queue thread')
         queue.join_thread()
-        print('ending process')
 
 def progress_effect(strip, color, queue, delay=0, iterations=1, reverse=False, progress=0, progress_color=None):
    perc = float(progress) / 100 * float(strip.numPixels())

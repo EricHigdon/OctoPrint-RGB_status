@@ -321,8 +321,12 @@ class RGBStatusPlugin(
 
     def on_event(self, event, payload):
         if event == 'PrintStarted':
-            progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
-            self.run_effect('Solid Color', progress_base_color, delay=10, force=True)
+            self.run_effect(
+                progress_effect,
+                hex_to_rgb(self._settings.get(['progress_base_color'])),
+                progress=0,
+                progress_color=hex_to_rgb(self._settings.get(['progress_color'])),
+            )
         elif event == 'PrintFailed':
             self.run_fail_effect()
         elif event == 'PrintPaused':
@@ -341,12 +345,8 @@ class RGBStatusPlugin(
             self._logger.info('Progress was set to 100, but the idle effect was already running. Ignoring progress update')
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self._logger.info('Updating Progress LEDs: ' + str(progress))
-            self.run_effect(
-                progress_effect,
-                hex_to_rgb(self._settings.get(['progress_base_color'])),
-                progress=progress,
-                progress_color=hex_to_rgb(self._settings.get(['progress_color'])),
-            )
+            if hasattr(self, '_queue'):
+                self._queue.put(progress)
         elif self.strip is None:
             self._logger.error('Error setting progress: The strip object does not exist. Did it fail to initialize?')
 
