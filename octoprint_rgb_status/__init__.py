@@ -41,7 +41,6 @@ EFFECTS = {
     'Plasma': plasma,
 }
 
-
 class RGBStatusPlugin(
         plugin.AssetPlugin,
 	plugin.StartupPlugin,
@@ -323,7 +322,7 @@ class RGBStatusPlugin(
     def on_event(self, event, payload):
         if event == 'PrintStarted':
             progress_base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
-            self.run_effect('Solid Color', progress_base_color, delay=10)
+            self.run_effect('Solid Color', progress_base_color, delay=10, force=True)
         elif event == 'PrintFailed':
             self.run_fail_effect()
         elif event == 'PrintPaused':
@@ -341,23 +340,13 @@ class RGBStatusPlugin(
         if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
             self._logger.info('Progress was set to 100, but the idle effect was already running. Ignoring progress update')
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
-            self.kill_effect()
             self._logger.info('Updating Progress LEDs: ' + str(progress))
-            perc = float(progress) / 100 * float(self.strip.numPixels())
-            base_color = hex_to_rgb(self._settings.get(['progress_base_color']))
-            progress_color = hex_to_rgb(self._settings.get(['progress_color']))
-            pixels_reversed = self._settings.get_boolean(['leds_reversed'])
-            pixels_range = range(self.strip.numPixels())
-            if pixels_reversed:
-                pixels_range = reversed(pixels_range)
-            for i, p in enumerate(pixels_range):
-                if i+1 <= int(perc):
-                    self.strip.setPixelColorRGB(p, *progress_color)
-                elif i+1 == int(perc)+1:
-                    self.strip.setPixelColorRGB(p, *blend_colors(base_color, progress_color, (perc % 1)))
-                else:
-                    self.strip.setPixelColorRGB(p, *base_color)
-            self.strip.show()
+            self.run_effect(
+                progress_effect,
+                hex_to_rgb(self._settings.get(['progress_base_color'])),
+                progress=progress,
+                progress_color=hex_to_rgb(self._settings.get(['progress_color'])),
+            )
         elif self.strip is None:
             self._logger.error('Error setting progress: The strip object does not exist. Did it fail to initialize?')
 
@@ -391,9 +380,13 @@ class RGBStatusPlugin(
         else:
             self._logger.info('Effect is not alive')
 
-    def run_effect(self, effect_name, color=None, delay=50, min_time=0, force=False):
+    def run_effect(self, effect_name, color=None, delay=50, min_time=0, force=False, **kwargs):
         if getattr(self, 'strip', None) is not None and getattr(self, '_lightsOn', False):
-            effect = EFFECTS.get(effect_name)
+            if isinstance(effect_name, str):
+                effect = EFFECTS.get(effect_name)
+            else:
+                effect = effect_name
+                effect_name = 'Progress'
             if effect is not None:
                 if not hasattr(self, '_lock'):
                     self._lock = self.context.Lock()
@@ -407,6 +400,7 @@ class RGBStatusPlugin(
                 self._effect = self.context.Process(
                     target=run_effect,
                     args=(effect, self._lock, self._queue, self.strip, color, delay, self._shutdown_event, reverse),
+                    kwargs=kwargs,
                     name=effect_name
                 )
                 self._effect.start()

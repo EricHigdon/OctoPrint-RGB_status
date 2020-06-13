@@ -7,7 +7,7 @@ import time
 import traceback
 
 
-def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reverse=False):
+def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reverse=False, **kwargs):
     lock.acquire()
     strip = Adafruit_NeoPixel(*settings)
     strip.begin()
@@ -18,7 +18,7 @@ def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reve
                if message == 'KILL':
                    print('KILL code found in queue')
                    break
-           effect(strip, color, queue, delay, reverse=reverse)
+           effect(strip, color, queue, delay, reverse=reverse, **kwargs)
     finally:
         print('releasing lock')
         lock.release()
@@ -30,6 +30,20 @@ def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reve
         print('joining queue thread')
         queue.join_thread()
         print('ending process')
+
+def progress_effect(strip, color, queue, delay=0, iterations=1, reverse=False, progress=0, progress_color=None):
+   perc = float(progress) / 100 * float(strip.numPixels())
+   pixels_range = range(strip.numPixels())
+   if reverse:
+       pixels_range = reversed(pixels_range)
+   for i, p in enumerate(pixels_range):
+       if i+1 <= int(perc):
+           strip.setPixelColorRGB(p, *progress_color)
+       elif i+1 == int(perc)+1:
+           strip.setPixelColorRGB(p, *blend_colors(color, progress_color, (perc % 1)))
+       else:
+           strip.setPixelColorRGB(p, *color)
+   strip.show()
 
 # Define functions which animate LEDs in various ways.
 def solid_color(strip, color, queue, delay=0, iterations=1, reverse=False):
