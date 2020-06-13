@@ -17,7 +17,7 @@ def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reve
                message = queue.get()
                if message == 'KILL':
                    break
-               else:
+               elif 'progress' in kwargs:
                    kwargs['progress'] = int(message)
            effect(strip, color, queue, delay, reverse=reverse, **kwargs)
     finally:

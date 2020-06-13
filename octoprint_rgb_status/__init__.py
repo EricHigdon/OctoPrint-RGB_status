@@ -341,11 +341,19 @@ class RGBStatusPlugin(
             self.run_disconnected_effect()
 
     def on_print_progress(self, storage, path, progress):
-        if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive():
+        if progress == 100 and hasattr(self, '_effect') and self._effect.is_alive() and self._effect.name != 'Progress':
             self._logger.info('Progress was set to 100, but the idle effect was already running. Ignoring progress update')
+            return
         if self.strip is not None and self._settings.get_boolean(['show_progress']):
             self._logger.info('Updating Progress LEDs: ' + str(progress))
-            if hasattr(self, '_queue'):
+            if self._effect.name != 'Progress':
+                self.run_effect(
+                    progress_effect,
+                    hex_to_rgb(self._settings.get(['progress_base_color'])),
+                    progress=progress,
+                    progress_color=hex_to_rgb(self._settings.get(['progress_color'])),
+                )
+            elif hasattr(self, '_queue'):
                 self._queue.put(progress)
         elif self.strip is None:
             self._logger.error('Error setting progress: The strip object does not exist. Did it fail to initialize?')
