@@ -322,7 +322,7 @@ class RGBStatusPlugin(
     def on_event(self, event, payload):
         if event == 'PrintStarted':
             self.run_effect(
-                progress_effect,
+                'Progress',
                 hex_to_rgb(self._settings.get(['progress_base_color'])),
                 progress=0,
                 progress_color=hex_to_rgb(self._settings.get(['progress_color'])),
@@ -348,7 +348,7 @@ class RGBStatusPlugin(
             self._logger.info('Updating Progress LEDs: ' + str(progress))
             if self._effect.name != 'Progress':
                 self.run_effect(
-                    progress_effect,
+                    'Progress',
                     hex_to_rgb(self._settings.get(['progress_base_color'])),
                     progress=progress,
                     progress_color=hex_to_rgb(self._settings.get(['progress_color'])),
@@ -390,11 +390,10 @@ class RGBStatusPlugin(
 
     def run_effect(self, effect_name, color=None, delay=50, min_time=0, force=False, **kwargs):
         if getattr(self, 'strip', None) is not None and getattr(self, '_lightsOn', False):
-            if isinstance(effect_name, str):
-                effect = EFFECTS.get(effect_name)
+            if effect_name == 'Progress':
+                effect = progress_effect
             else:
-                effect = effect_name
-                effect_name = 'Progress'
+                effect = EFFECTS.get(effect_name)
             if effect is not None:
                 if not hasattr(self, '_lock'):
                     self._lock = self.context.Lock()
