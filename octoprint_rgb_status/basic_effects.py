@@ -5,6 +5,7 @@ from .utils import blend_colors
 from datetime import datetime
 import time
 import traceback
+from six.moves import range
 
 
 def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reverse=False, **kwargs):
@@ -29,7 +30,7 @@ def run_effect(effect, lock, queue, settings, color, delay, shutdown_event, reve
 
 def progress_effect(strip, color, queue, delay=0, iterations=1, reverse=False, progress=0, progress_color=None):
    perc = float(progress) / 100 * float(strip.numPixels())
-   pixels_range = range(strip.numPixels())
+   pixels_range = list(range(strip.numPixels()))
    if reverse:
        pixels_range = reversed(pixels_range)
    for i, p in enumerate(pixels_range):
@@ -50,7 +51,7 @@ def solid_color(strip, color, queue, delay=0, iterations=1, reverse=False):
 
 def color_wipe(strip, color, queue, delay=50, iterations=1, reverse=False):
     """Wipe color across display a pixel at a time."""
-    pixels_range = range(strip.numPixels())
+    pixels_range = list(range(strip.numPixels()))
     if reverse:
         pixels_range = list(reversed(pixels_range))
 
@@ -71,7 +72,7 @@ def color_wipe(strip, color, queue, delay=50, iterations=1, reverse=False):
 
 def theater_chase(strip, color, queue, delay=50, iterations=10, reverse=False):
     """Movie theater light style chaser animation."""
-    pixels_range = range(0, strip.numPixels(), 3)
+    pixels_range = list(range(0, strip.numPixels(), 3))
     if reverse:
         pixels_range = list(reversed(pixels_range))
 
@@ -144,7 +145,7 @@ def pulse(strip, color, queue, delay, iterations=1, reverse=False):
         if not queue.empty():
             return
         time.sleep(delay/1000.0)
-    for i in reversed(range(255)):
+    for i in reversed(list(range(255))):
         strip.setBrightness(i)
         strip.show()
         if not queue.empty():
@@ -163,7 +164,7 @@ def knight_rider(strip, color, queue, delay, iterations=1, reverse=False):
         if not queue.empty():
             return
         time.sleep(delay/100.0)
-    for active_pixel in reversed(range(strip.numPixels())):
+    for active_pixel in reversed(list(range(strip.numPixels()))):
         for i in range(strip.numPixels()):
             if i == active_pixel or i+1 == active_pixel or i-1 == active_pixel:
                 strip.setPixelColorRGB(i, *color)
