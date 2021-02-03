@@ -42,15 +42,15 @@ EFFECTS = {
 }
 
 class RGBStatusPlugin(
-		plugin.AssetPlugin,
-		plugin.StartupPlugin,
-		plugin.ProgressPlugin,
-		plugin.EventHandlerPlugin,
-		plugin.SettingsPlugin,
-		plugin.TemplatePlugin,
-	  plugin.ShutdownPlugin,
-	  plugin.SimpleApiPlugin,
-	  plugin.WizardPlugin):
+	plugin.AssetPlugin,
+	plugin.StartupPlugin,
+	plugin.ProgressPlugin,
+	plugin.EventHandlerPlugin,
+	plugin.SettingsPlugin,
+	plugin.TemplatePlugin,
+	plugin.ShutdownPlugin,
+	plugin.SimpleApiPlugin,
+	plugin.WizardPlugin):
 
     api_errors = []
 
