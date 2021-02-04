@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from octoprint import plugin
 from datetime import datetime, timedelta
-import multiprocessing
+import multiprocessing, grp, pwd, os
 from rpi_ws281x import *
 from .utils import *
 from .basic_effects import *
@@ -42,15 +42,15 @@ EFFECTS = {
 }
 
 class RGBStatusPlugin(
-        plugin.AssetPlugin,
+	plugin.AssetPlugin,
 	plugin.StartupPlugin,
 	plugin.ProgressPlugin,
 	plugin.EventHandlerPlugin,
 	plugin.SettingsPlugin,
 	plugin.TemplatePlugin,
-        plugin.ShutdownPlugin,
-        plugin.SimpleApiPlugin,
-        plugin.WizardPlugin):
+	plugin.ShutdownPlugin,
+	plugin.SimpleApiPlugin,
+	plugin.WizardPlugin):
 
     api_errors = []
 
@@ -58,7 +58,7 @@ class RGBStatusPlugin(
         return any([not value for key, value in self.get_wizard_details().items()])
 
     def get_wizard_version(self):
-        return 3
+        return 4
 
     def get_wizard_details(self):
         return {
@@ -74,7 +74,8 @@ class RGBStatusPlugin(
             'enable_spi': ['password'],
             'increase_buffer': ['password'],
             'set_frequency': ['password'],
-            'flipswitch':[]
+            'flipswitch':[],
+            'reboot':[]
         }
 
     def run_command(self, command, password=None):
@@ -93,7 +94,7 @@ class RGBStatusPlugin(
             return stdout
 
     def adduser_done(self):
-        user_groups = self.run_command('groups pi').split()
+        user_groups = [g.gr_name for g in grp.getgrall() if 'pi' in g.gr_mem]
         return 'gpio' in user_groups
 
     def spi_enabled(self):
@@ -149,6 +150,8 @@ class RGBStatusPlugin(
             cmd = ['sudo', '-S', 'sed', '-i', '$ s/$/ spidev.bufsiz=32768/', '/boot/cmdline.txt']
         elif command == 'set_frequency' and not self.frequency_set():
             cmd = ['sudo', '-S', 'bash', '-c', 'echo core_freq=250 >> /boot/config.txt']
+        elif command == 'reboot':
+            cmd = ['sudo', 'reboot']
         if cmd:
             stdout = self.run_command(cmd, password=password)
 

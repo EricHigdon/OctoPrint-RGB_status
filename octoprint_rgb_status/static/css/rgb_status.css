@@ -1,57 +1,71 @@
 #wizard_plugin_rgb_status ol li {
-	width: 100%;
-	border-bottom: 1px solid #ccc;
-	display: block;
-	padding: 5px;
-	padding-bottom: 20px;
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    display: block;
+    padding: 5px;
+    padding-bottom: 20px;
 }
+
 #wizard_plugin_rgb_status ol li.complete * {
-	display: none;
+    display: none;
 }
+
 #wizard_plugin_rgb_status ol li.complete h3 {
-	display: initial;
+    display: initial;
 }
+
 #wizard_plugin_rgb_status ol li:before {
-	float: left;
-	margin-left: -30px;
-	font-size: 25pt;
-	color: #dc0c0c;
-	margin-top: 20px;
+    float: left;
+    margin-left: -30px;
+    font-size: 25pt;
+    color: #dc0c0c;
+    margin-top: 20px;
 }
-#wizard_plugin_rgb_status ol li:first-of-type:before  {
-	content: "1";
+
+#wizard_plugin_rgb_status ol li:first-of-type:before {
+    content: "1";
 }
-#wizard_plugin_rgb_status ol li:nth-of-type(2):before  {
-	content: "2";
+
+#wizard_plugin_rgb_status ol li:nth-of-type(2):before {
+    content: "2";
 }
-#wizard_plugin_rgb_status ol li:nth-of-type(3):before  {
-	content: "3";
+
+#wizard_plugin_rgb_status ol li:nth-of-type(3):before {
+    content: "3";
 }
-#wizard_plugin_rgb_status ol li:nth-of-type(4):before  {
-	content: "4";
+
+#wizard_plugin_rgb_status ol li:nth-of-type(4):before {
+    content: "4";
 }
+
 #wizard_plugin_rgb_status ol li.complete:before {
-	content: "✓" !important;
-	color: #47b347;
-	margin-top: 10px;
+    content: "✓" !important;
+    color: #47b347;
+    margin-top: 10px;
 }
+
 #wizard_plugin_rgb_status .code {
-	font-family: monospace;
-	background: #ddd;
-	padding: 1px 5px;
+    font-family: monospace;
+    background: #ddd;
+    color: #888;
+    padding: 1px 5px;
 }
+
 #wizard_plugin_rgb_status .helpText {
-	color: #888;
-	font-size: 9pt;
-	line-height: 10pt;
-	margin-top: -5px;
-	margin-bottom: 15px;
+    color: #888;
+    font-size: 9pt;
+    line-height: 10pt;
+    margin-top: -5px;
+    margin-bottom: 15px;
 }
+
 #wizard_plugin_rgb_status .errors {
-	color: #f33;
-	font-weight: bold;
+    color: #f33;
+    font-weight: bold;
 }
-#navbar .navbar-inner .nav>#navbar_plugin_rgb_status>a.on, #navbar .navbar-inner .nav>#navbar_plugin_rgb_status>a.on:hover {
+
+#navbar .navbar-inner .nav>#navbar_plugin_rgb_status>a.on,
+#navbar .navbar-inner .nav>#navbar_plugin_rgb_status>a.on:hover {
     background-image: url(/plugin/rgb_status/static/img/splash.png);
     background-size: 50%;
     background-repeat: no-repeat;
